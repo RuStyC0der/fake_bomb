@@ -33,13 +33,13 @@ char simbols[][2]={
         {15,'D'}
 };
 
-void keyboard_get_key() {
+char keyboard_get_key() {
 
         for(int i=0; i<4; i++) { //цикл для перехода по всем строкам
                 digitalWrite(rows[i], HIGH); //подаем на текущую строку высокий уровень
                 for(int j=0; j<4; j++) { //цикл для переходов по всем столбцам
                         if(digitalRead(cols[j])==HIGH) { //если уровень высокий, то кнопка нажата
-                                Serial.print(_FindKey(4*i+j)); //выводим в терминал код нажатой кнопки
+                                return _FindKey(4*i+j);
                         }
                 }
                 digitalWrite(rows[i], LOW); //выключаем высокий уровень для пройденной строки
