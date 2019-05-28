@@ -1,9 +1,11 @@
-#include <LiquidCrystal.h>
-LiquidCrystal lcd(A0, A1, A2, A3, A4, A5);
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,20,4);
 
 void lcd_init()
 {
-        lcd.begin(16, 2);
+        lcd.begin(20, 4);
         Serial.begin(9600);
         lcd.setCursor(0, 0);
 }
@@ -11,16 +13,16 @@ void lcd_init()
 void lcd_print(String text)
 {
         lcd.setCursor(0, 0);
-        if (text.length() > 32)
+        if (text.length() > 80)
         {
-                Serial.println("More then 32");
-                lcd.print("More then 32");
+                Serial.println("More then 80");
+                lcd.print("More then 80");
         }
-        else if (text.length() > 16 && text.length() <= 32)
+        else if (text.length() > 20 && text.length() <= 40)
         {
-                lcd.print(text.substring(0,16));
+                lcd.print(text.substring(0,20));
                 lcd.setCursor(0,1);
-                lcd.print(text.substring(16,32));
+                lcd.print(text.substring(20,40));
                 Serial.println(text);
         }
         else {
