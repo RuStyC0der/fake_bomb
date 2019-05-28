@@ -25,7 +25,7 @@ MFRC522::MIFARE_Key key;
 byte keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
 byte current_key[4];
 
-void setup_rfid() {
+void rfid_setup() {
         // Serial.begin(9600);
         SPI.begin(); // Init SPI bus
         rfid.PCD_Init(); // Init MFRC522
@@ -38,7 +38,7 @@ void setup_rfid() {
 
 }
 
-bool authentificate() {
+bool rfid_authentificate() {
 
         // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
         if ( !rfid.PICC_IsNewCardPresent())
@@ -86,7 +86,7 @@ bool authentificate() {
                         return true;
                 }
         }
-        delay(1000);
+        // delay(1000);
         return false;
 
         // Halt PICC
