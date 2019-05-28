@@ -1,6 +1,6 @@
-void init_card(/* arguments */) {
+void card_init(/* arguments */) {
   /* code */
 }
-void load_config(){
+void card_load_config(){
 
 }
