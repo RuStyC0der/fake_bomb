@@ -14,8 +14,8 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define SS_PIN 9
-#define RST_PIN 8
+#define SS_PIN 53
+#define RST_PIN 5
 
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
@@ -38,15 +38,15 @@ void rfid_setup() {
 
 }
 
-bool rfid_authentificate() {
+int rfid_authentificate() {
 
         // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
         if ( !rfid.PICC_IsNewCardPresent())
-                return false;
+                return -1;
 
         // Verify if the NUID has been readed
         if ( !rfid.PICC_ReadCardSerial())
-                return false;
+                return -1;
 
         Serial.print(F("PICC type: "));
         MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
@@ -57,14 +57,14 @@ bool rfid_authentificate() {
             piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
             piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
                 Serial.println(F("Your tag is not of type MIFARE Classic."));
-                return false;
+                return -1;
         }
 
 
         for (byte i = 0; i < 4; i++) {
                 current_key[i] = rfid.uid.uidByte[i];
-                //   Serial.print(current_key[i]);
-                //   Serial.print(" ");
+                // Serial.print(current_key[i]);
+                // Serial.print(",");
         }
         // Serial.println();
         // delay(1000);
