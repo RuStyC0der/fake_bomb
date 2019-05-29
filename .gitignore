@@ -1,4 +1,4 @@
-'Serial monitor'
+Serial monitor
 *.ino.bin
 *.ino.elf
 *.ino.hex
