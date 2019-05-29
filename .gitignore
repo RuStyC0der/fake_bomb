@@ -1,3 +1,8 @@
+'Serial monitor'
+*.ino.bin
+*.ino.elf
+*.ino.hex
+*.ino.eep
 app/bin/
 app/pde.jar
 build/macosx/work/
