@@ -1,0 +1,6 @@
+LCD_2004_I2C:
+https://github.com/ssilver2007/LCD_1602_RUS - lib for working with
+Cyrillic with I2C.
+https://github.com/johnrickman/LiquidCrystal_I2C - additional library for
+working with LCD 2004 through I2C.
+ 

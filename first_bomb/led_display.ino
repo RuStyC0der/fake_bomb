@@ -6,7 +6,7 @@ TM1637 tm1637(CLK, DIO);
 int8_t NumTab[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; //0~9,A,b,C,d,E,F
 int8_t ListDisp[4];
 
-void led_init() {
+void led_setup() {
         tm1637.init();
         tm1637.set(BRIGHT_TYPICAL);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 }

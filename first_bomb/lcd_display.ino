@@ -1,32 +1,33 @@
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
+#include <LCD_1602_RUS.h>
 
-LiquidCrystal_I2C lcd(0x27,20,4);
+LCD_1602_RUS lcd(0x27, 20, 4);
 
-void lcd_init()
+void lcd_setup()
 {
-        lcd.begin(20, 4);
-        Serial.begin(9600);
-        lcd.setCursor(0, 0);
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(2, 0);
+  lcd.print(L"АКТИВОВАНО");
+
 }
 
-void lcd_print(String text)
+void lcd_print(char str[])
 {
-        lcd.setCursor(0, 0);
-        if (text.length() > 80)
-        {
-                Serial.println("More then 80");
-                lcd.print("More then 80");
-        }
-        else if (text.length() > 20 && text.length() <= 40)
-        {
-                lcd.print(text.substring(0,20));
-                lcd.setCursor(0,1);
-                lcd.print(text.substring(20,40));
-                Serial.println(text);
-        }
-        else {
-                Serial.println(text);
-                lcd.print(text);
-        }
+    lcd.setCursor(0, 0);
+	char * pch;
+  	pch = strtok (str,"|");
+    int i = 0;
+	while (pch != NULL)
+	{
+      lcd.setCursor(0, i);
+      i++;
+	  Serial.println(pch);
+      lcd.print(pch);
+	  pch = strtok (NULL, "|");
+	}
+}
+
+void lcd_loop() {
+	char str[] ="alarm|need code to|desactivation";
+	lcd_print(str);
 }
