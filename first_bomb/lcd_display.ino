@@ -1,33 +1,31 @@
 #include <LCD_1602_RUS.h>
-
-LCD_1602_RUS lcd(0x27, 20, 4);
+#define CHARS 20
+#define LINES 4
+LCD_1602_RUS lcd(0x27, CHARS, LINES);
 
 void lcd_setup()
 {
-  lcd.init();
-  lcd.backlight();
-  lcd.setCursor(2, 0);
-  lcd.print(L"АКТИВОВАНО");
-
+        lcd.init();
+        lcd.backlight();
+        lcd.setCursor(2, 0);
+        lcd.print(L"АКТИВОВАНО");
 }
 
 void lcd_print(char str[])
 {
-    lcd.setCursor(0, 0);
-	char * pch;
-  	pch = strtok (str,"|");
-    int i = 0;
-	while (pch != NULL)
-	{
-      lcd.setCursor(0, i);
-      i++;
-	  Serial.println(pch);
-      lcd.print(pch);
-	  pch = strtok (NULL, "|");
-	}
+        char * sub_str;
+        sub_str = strtok (str,"|");
+        int i = 0;
+        while (sub_str != NULL)
+        {
+                lcd.setCursor((CHARS/2) - (strlen(sub_str) / 2), i);
+                i++;
+                Serial.println(sub_str);
+                lcd.print(L sub_str);
+                sub_str = strtok (NULL, "|");
+        }
 }
-
-void lcd_loop() {
-	char str[] ="alarm|need code to|desactivation";
-	lcd_print(str);
+char str[] ="УВАГА|АКТИВОВАНО БОМБУ|КОД:";
+void loop() {
+        lcd_print(str);
 }
