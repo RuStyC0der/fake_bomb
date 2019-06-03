@@ -34,7 +34,6 @@ void rfid_setup() {
                 key.keyByte[i] = 0xFF;
         }
 
-        Serial.println(F("This code scan the MIFARE Classsic NUID."));
 
 }
 
