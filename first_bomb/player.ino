@@ -3,7 +3,10 @@
 mp3TF mp3tf = mp3TF ();
 
 void setup () {
-	mp3tf.init (&Serial);
+	delay (5000); 
+	Serial1.begin(9600);
+
+	mp3tf.init (&Serial1);
 	Serial.begin (9600);
 }
 
