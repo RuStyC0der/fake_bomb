@@ -1,5 +1,5 @@
 #include "TM1637.h"
-#define CLK
+#define CLK 2
 #define DIO 3
 
 TM1637 tm1637(CLK, DIO);
