@@ -2,7 +2,7 @@
 
 File myFile;
 
-void setup()
+void sd_setup()
 {
         Serial.begin(9600);
         Serial.print("Initializing SD card...");
@@ -30,9 +30,4 @@ void setup()
 // если файл не открылся, отображаем сообщение об ошибке:
                 Serial.println("error opening test.txt");
         }
-}
-
-void loop()
-{
-
 }

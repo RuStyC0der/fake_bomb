@@ -14,10 +14,14 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
+<<<<<<< HEAD
 #define SS_PIN 10
+=======
+#define SC_PIN 10
+>>>>>>> a8e08e6727d877f9ad4b696c94945125807418c3
 #define RST_PIN 5
 
-MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
+MFRC522 rfid(SC_PIN, RST_PIN); // Instance of the class
 
 MFRC522::MIFARE_Key key;
 
@@ -26,7 +30,7 @@ byte keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218
 byte current_key[4];
 
 void rfid_setup() {
-        // Serial.begin(9600);
+        Serial.begin(9600);
         SPI.begin(); // Init SPI bus
         rfid.PCD_Init(); // Init MFRC522
 

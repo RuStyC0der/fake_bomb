@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // #include <mp3TF.h>
 //
 // mp3TF mp3tf = mp3TF ();
@@ -22,6 +23,21 @@
 // 	mp3tf.pause ();
 // 	delay (5000);
 // }
+=======
+#include <mp3TF.h>
+
+mp3TF mp3tf = mp3TF ();
+
+void mp3_setup () {
+	delay (5000);
+	Serial1.begin(9600);
+
+	mp3tf.init (&Serial1);
+	Serial.begin (9600);
+}
+
+
+>>>>>>> a8e08e6727d877f9ad4b696c94945125807418c3
 
 /****************************************************************
  *		mp3TF mp3tf = mp3TF ();

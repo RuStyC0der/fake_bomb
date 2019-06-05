@@ -20,6 +20,7 @@ void setup()
 
   Serial.println(F("Initializing DFPlayer ..."));
 
+<<<<<<< HEAD
   if (!myDFPlayer.begin(mySoftwareSerial)) {
     Serial.println(F("Unable to begin:"));
     Serial.println(F("1.Please recheck the connection!"));
@@ -94,4 +95,13 @@ void printDetail(uint8_t type, int value) {
     default:
       break;
   }
+=======
+void setup(){
+  rfid_setup();
+}
+
+void loop(){
+  Serial.println(rfid_authentificate());
+  delay(100);
+>>>>>>> a8e08e6727d877f9ad4b696c94945125807418c3
 }
