@@ -7,8 +7,6 @@ void lcd_setup()
 {
         lcd.init();
         lcd.backlight();
-        lcd.setCursor(2, 0);
-        lcd.print(L"АКТИВОВАНО");
 }
 
 void lcd_print(char str[])
@@ -20,7 +18,7 @@ void lcd_print(char str[])
         {
                 lcd.setCursor((CHARS/2) - (strlen(sub_str) / 2), i);
                 i++;
-                Serial.println(sub_str);
+                //Serial.println(sub_str);
                 lcd.print(sub_str);
                 sub_str = strtok (NULL, "|");
         }
