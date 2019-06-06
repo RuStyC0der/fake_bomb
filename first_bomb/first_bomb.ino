@@ -1,19 +1,9 @@
 void setup() {
-        lcd_setup();
-        led_setup();
-        rfid_setup();
-        sd_setup();
-        mp3_setup();
+
 }
-
-char str[] = "УВАГА|АКТИВОВАНО БОМБУ|КОД:";
-char str1[] = "Test firmaware|hello world|lcdtest end";
-
+extern int first_treshold;
+// extern volatile unsigned long timer0_millis;
 void loop() {
-        lcd_print(str1);
-        led_print(1,5,7,2);
-        rfid_authentificate();
-        delay(3500);
-        lcd.clear();
-        lcd_print(str);
+  first_treshold = 0;
+// int a = mila;
 }
