@@ -1,6 +1,9 @@
 #include <SD.h>
 
-File myFile;
+File file;
+
+#define CONFIG_SIZE 2
+int config[CONFIG_SIZE] = {0};
 
 void sd_setup()
 {
@@ -16,18 +19,28 @@ void sd_setup()
                 return;
         }
         Serial.println("initialization done.");
-// открываем файл для считывания данных:
-        myFile = SD.open("test.txt");
-        if (myFile) {
-                Serial.println("test.txt:");
-// считываем все данные из файла:
-                while (myFile.available()) {
-                        Serial.write(myFile.read());
-                }
-// закрываем файл:
-                myFile.close();
-        } else {
-// если файл не открылся, отображаем сообщение об ошибке:
-                Serial.println("error opening test.txt");
+
+}
+
+char symbol;
+bool sd_load_config(){      // thos func return 1 if config loaded succfully, and 0 if not
+        file = SD.open("config.cfg");
+        if (!file) {
+                Serial.println("error opening config.cfg");
+                return false;
         }
+
+        for (int i; i < CONFIG_SIZE; i++ ) {
+                while (symbol != ' ') {
+                        symbol = file.read();
+                        if (isdigit(symbol)) {
+                                config[i] = (config[i] * 10) + ((int)(symbol) - 48);
+
+                        }
+                }
+                while (file.read() != '\n') {
+
+                }
+        }
+        return 1;
 }
