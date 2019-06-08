@@ -2,14 +2,14 @@ extern int config[];
 // extern volatile unsigned long timer0_millis;
 #include "GyverTimer.h"
 
-   // config:
-   // 0: work time time
-   // 1: del time
-   // 2: fine wait time
-   // 3: add time
-   // 4: first key code
-   // 5: second key code
-   // 6: thrid key code
+// config:
+// 0: work time time
+// 1: del time
+// 2: fine wait time
+// 3: add time
+// 4: first key code
+// 5: second key code
+// 6: thrid key code
 
 
 
