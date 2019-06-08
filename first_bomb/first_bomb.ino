@@ -14,6 +14,6 @@ void loop() {
         led_print(1,5,7,2);
         rfid_authentificate();
         delay(3500);
-        lcd.clear();
+        lcd_clear();
         lcd_print(str);
 }

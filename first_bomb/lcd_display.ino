@@ -23,3 +23,7 @@ void lcd_print(char str[])
                 sub_str = strtok (NULL, "|");
         }
 }
+
+void lcd_clear() {
+        lcd.clear();
+}
