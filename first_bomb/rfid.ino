@@ -38,15 +38,15 @@ void rfid_setup() {
 
 }
 
-int rfid_authentificate() {
+bool rfid_authentificate() {
 
         // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
         if ( !rfid.PICC_IsNewCardPresent())
-                return -1;
+                return false;
 
         // Verify if the NUID has been readed
         if ( !rfid.PICC_ReadCardSerial())
-                return -1;
+                return false;
 
         Serial.print(F("PICC type: "));
         MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
@@ -57,7 +57,7 @@ int rfid_authentificate() {
             piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
             piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
                 Serial.println(F("Your tag is not of type MIFARE Classic."));
-                return -1;
+                return false;
         }
 
 

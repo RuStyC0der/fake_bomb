@@ -1,107 +1,52 @@
+#include <SD.h>
 
-#include "Arduino.h"
-#include "SoftwareSerial.h"
-#include "DFRobotDFPlayerMini.h"
+File file;
 
-int serial1 = 10;
-int serial2 = 11;
+#define CONFIG_SIZE 2
+int config[CONFIG_SIZE] = {0};
 
-SoftwareSerial mySoftwareSerial(serial1, serial2); // RX, TX
-DFRobotDFPlayerMini myDFPlayer;
-void printDetail(uint8_t type, int value);
-
-void setup()
+void sd_setup()
 {
-  pinMode(serial1, INPUT);
-  pinMode(serial2, OUTPUT);
+        Serial.begin(9600);
+        Serial.print("Initializing SD card...");
+// на Ethernet шилде CS соответствует 4 пину. По умолчанию он установлен в режим output
+// обратите внимание, что если он не используется в качестве CS пина, SS пин на оборудовании
+// (10 на большинстве плат Arduino, 53 на Arduino Mega) надо оставить в режиме output.
+// иначе функции библиотеки SD library не будут работать.
+        pinMode(10, OUTPUT);
+        if (!SD.begin(10)) {
+                Serial.println("initialization failed!");
+                return;
+        }
+        Serial.println("initialization done.");
 
-  mySoftwareSerial.begin(9600);
-  Serial.begin(9600);
-
-  Serial.println(F("Initializing DFPlayer ..."));
-
-<<<<<<< HEAD
-  if (!myDFPlayer.begin(mySoftwareSerial)) {
-    Serial.println(F("Unable to begin:"));
-    Serial.println(F("1.Please recheck the connection!"));
-    Serial.println(F("2.Please insert the SD card!"));
-  }
-  else
-  {
-    Serial.println(F("DFPlayer Mini online."));
-  }
-
-  myDFPlayer.volume(10);  //Set volume value. From 0 to 30
-  myDFPlayer.play(1);  //Play the first mp3
 }
 
-void loop()
-{
-  if (myDFPlayer.available()) {
-    printDetail(myDFPlayer.readType(), myDFPlayer.read()); //Print the detail message from DFPlayer to handle different errors and states.
-  }
-}
+char symbol;
+bool sd_load_config(){      // thos func return 1 if config loaded succfully, and 0 if not
+        file = SD.open("config.cfg");
+        if (!file) {
+                Serial.println("error opening config.cfg");
+                return false;
+        }
 
-void printDetail(uint8_t type, int value) {
-  switch (type) {
-    case TimeOut:
-      Serial.println(F("Time Out!"));
-      break;
-    case WrongStack:
-      Serial.println(F("Stack Wrong!"));
-      break;
-    case DFPlayerCardInserted:
-      Serial.println(F("Card Inserted!"));
-      break;
-    case DFPlayerCardRemoved:
-      Serial.println(F("Card Removed!"));
-      break;
-    case DFPlayerCardOnline:
-      Serial.println(F("Card Online!"));
-      break;
-    case DFPlayerPlayFinished:
-      Serial.print(F("Number:"));
-      Serial.print(value);
-      Serial.println(F(" Play Finished!"));
-      break;
-    case DFPlayerError:
-      Serial.print(F("DFPlayerError:"));
-      switch (value) {
-        case Busy:
-          Serial.println(F("Card not found"));
-          break;
-        case Sleeping:
-          Serial.println(F("Sleeping"));
-          break;
-        case SerialWrongStack:
-          Serial.println(F("Get Wrong Stack"));
-          break;
-        case CheckSumNotMatch:
-          Serial.println(F("Check Sum Not Match"));
-          break;
-        case FileIndexOut:
-          Serial.println(F("File Index Out of Bound"));
-          break;
-        case FileMismatch:
-          Serial.println(F("Cannot Find File"));
-          break;
-        case Advertise:
-          Serial.println(F("In Advertise"));
-          break;
-        default:
-          break;
-      }
-      break;
-    default:
-      break;
-  }
-=======
-void setup(){
-  rfid_setup();
-}
+        for (int i; i < CONFIG_SIZE; i++ ) {
+                while (symbol != ' ') {
+                        symbol = file.read();
+                        if (isdigit(symbol)) {
+                                config[i] = (config[i] * 10) + ((int)(symbol) - 48);
 
-void loop(){
-  Serial.println(rfid_authentificate());
-  delay(100);
->>>>>>> a8e08e6727d877f9ad4b696c94945125807418c3
+                        }
+                }
+                while (file.read() != '\n') {
+
+                }
+        }
+        return 1;
+}
+void setup() {
+
+}
+void loop() {
+
 }
