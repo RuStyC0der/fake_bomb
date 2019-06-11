@@ -1,5 +1,3 @@
-extern int config[];
-// extern volatile unsigned long timer0_millis;
 #include "GyverTimer.h"
 
 // config:
@@ -10,11 +8,16 @@ extern int config[];
 // 4: first key code
 // 5: second key code
 // 6: thrid key code
+// 7: first mpu treshold
+// 8: second mpu treshold
 
 
+
+extern int config[];
+// extern volatile int keys_array[];
 
 GTimer_ms second(1000);
-GTimer_ms fine_wait(1000); //
+GTimer_ms fine_wait(1000);
 
 byte startButton = 3;
 
@@ -31,11 +34,22 @@ void update_led_time(){
         led_print(minuts /10,minuts % 10,seconds/10, seconds%10);
 }
 
-void full_init(){
+void pre_init(){
+        sd_setup();
+        sd_load_config();
+        rfid_setup();
+        mpu_setup();
+        time = config[0] * 60 * 1000;
         fine_wait.setInterval(config[2] * 1000);
 }
 
+void post_init(){
+  led_enable();
+  lcd_enable();
+}
+
 void stage_a() {
+
 
 }
 
@@ -60,14 +74,19 @@ void refresh(){
                 time -= 1000;
                 update_led_time();
         }
+        if (fine_wait.isReady()){
+          //check
+        }
 
 }
 
 void setup() {
-        full_init();
+        pre_init();
         while (!digitalRead(startButton)) {
                 // wait for start
         }
+        post_init();
+
         for (int i = 0; i < 3; i++) {
                 stage_a();
                 stage_b();

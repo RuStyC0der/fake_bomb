@@ -2,7 +2,7 @@
 
 File file;
 
-#define CONFIG_SIZE 2
+#define CONFIG_SIZE 7
 int config[CONFIG_SIZE] = {0};
 
 void sd_setup()

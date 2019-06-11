@@ -8,8 +8,12 @@ int8_t ListDisp[4];
 
 void led_setup() {
         tm1637.init();
-        tm1637.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 }
+
+void led_enable(/* arguments */) {
+  tm1637.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+}
+
 void led_print(int num_0, int num_1, int num_2, int num_3){
         tm1637.display(0, num_0);
         tm1637.display(1, num_1);

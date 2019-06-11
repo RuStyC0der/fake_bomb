@@ -2,7 +2,7 @@
 #include "MPU6050.h"
 
 // #define mila 123
-
+// extern int config[];
 
 int first_treshold = 1; //change me
 int second_treshold = 2; //change me

@@ -6,7 +6,10 @@ LCD_1602_RUS lcd(0x27, CHARS, LINES);
 void lcd_setup()
 {
         lcd.init();
-        lcd.backlight();
+}
+
+void lcd_enable(/* arguments */) {
+  lcd.backlight();
 }
 
 void lcd_print(char str[])

@@ -2,6 +2,9 @@
 
 const byte COLS = 4; // число строк клавиатуры
 const byte ROWS = 4; // число столбцов клавиатуры
+
+// int keys_array[3] = {-1};
+
 char hexaKeys[ROWS][COLS] = {
         {'1','2','3','A'},
         {'4','5','6','B'},
