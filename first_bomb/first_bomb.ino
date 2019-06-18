@@ -7,59 +7,54 @@
 #include <SD.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-////////////////////////////////////////////////////////////////////////////////
-// Keyboard variables
-const byte COLS = 3; // число строк клавиатуры
-const byte ROWS = 4; // число столбцов клавиатуры
 
-char hexaKeys[ROWS][COLS] = {
+
+const byte keypad_COLS = 3; // число строк клавиатуры
+const byte keypad_ROWS = 4; // число столбцов клавиатуры
+
+char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 		{'1','2','3'},
 		{'4','5','6'},
 		{'7','8','9'},
 		{'*','0','#'}
 };
 
-byte rowPins[ROWS] = {31, 33, 35, 37}; // к каким выводам подключаем управление строками
-byte colPins[COLS] = {39, 41, 43}; // к каким выводам подключаем управление столбцами
-Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
-int presed_keys[3];
-byte presed_keys_count = 0;
-////////////////////////////////////////////////////////////////////////////////
-//rfid variables
-#define RST_PIN 5
+byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37}; // к каким выводам подключаем управление строками
+byte keypad_colPins[keypad_COLS] = {39, 41, 43}; // к каким выводам подключаем управление столбцами
+byte keypad_presed_keys[3];
+byte keypad_presed_keys_count = 0;
 
-MFRC522 rfid(53, RST_PIN); // Instance of the class
+#define RFID_RST_PIN 5
+byte rfid_keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
+byte rfid_access_flag_key[4] = {1,1,1,1};
+byte rfid_current_key[4];
 
-MFRC522::MIFARE_Key key;
+#define LCD_CHARS 20
+#define LCD_LINES 4
 
-// Init array that will store new NUID
-byte keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
-byte current_key[4];
-////////////////////////////////////////////////////////////////////////////////
-// lcd variables
-#define CHARS 20
-#define LINES 4
-LCD_1602_RUS lcd(0x27, CHARS, LINES);
-////////////////////////////////////////////////////////////////////////////////
-// led variables
-#define CLK 2
-#define DIO 3
+#define LED_CLK 2
+#define LED_DIO 3
 
-TM1637 tm1637(CLK, DIO);
-int8_t NumTab[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; //0~9,A,b,C,d,E,F
-int8_t ListDisp[4];
-////////////////////////////////////////////////////////////////////////////////
-// SD card variables
-File file;
+int8_t led_NumTab[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; //0~9,A,b,C,d,E,F
+int8_t led_ListDisp[4];
 
 #define CONFIG_SIZE 7
+int sd_ss_pin = 10;
 int config[CONFIG_SIZE] = {0};
-////////////////////////////////////////////////////////////////////////////////
-//mpu variables
-MPU6050 accel;
 
-int first_treshold = 1; //change me
-int second_treshold = 2; //change me
+
+int mpu_first_treshold = 1; //change me
+int mpu_second_treshold = 2; //change me
+////////////////////////////////////////////////////////////////////////////////
+//objects Instance
+Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
+MPU6050 accel;
+TM1637 tm1637(LED_CLK, LED_DIO);
+File config_file;
+LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
+
+MFRC522 rfid(53, RFID_RST_PIN); // Instance of the class
+MFRC522::MIFARE_Key key;
 
 ////////////////////////////////////////////////////////////////////////////////
 // config array structure
@@ -86,15 +81,13 @@ void rfid_setup() {
 
 }
 
-bool rfid_authentificate() {
+int rfid_authentificate() {
 
-		// Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
 		if ( !rfid.PICC_IsNewCardPresent())
-				return false;
+				return 0;
 
-		// Verify if the NUID has been readed
 		if ( !rfid.PICC_ReadCardSerial())
-				return false;
+				return 0;
 
 		Serial.print(F("PICC type: "));
 		MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
@@ -105,37 +98,46 @@ bool rfid_authentificate() {
 		    piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
 		    piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
 				Serial.println(F("Your tag is not of type MIFARE Classic."));
-				return false;
+				return 0;
 		}
 
 
 		for (byte i = 0; i < 4; i++) {
-				current_key[i] = rfid.uid.uidByte[i];
+				rfid_current_key[i] = rfid.uid.uidByte[i];
 				// Serial.print(current_key[i]);
 				// Serial.print(",");
 		}
 		// Serial.println();
 		// delay(1000);
 
-		bool flag = false;
+		bool flag = true;
+
+		for (byte i = 0; i < 4; i++) {
+				if (rfid_current_key[i] != rfid_access_flag_key[i]) {
+						flag = false;
+				}
+		}
+		if (flag == true) {
+				return 2;
+		}
 
 		for (byte i = 0; i < 4; i++) {
 				flag = true;
 				// Serial.println(i);
 				for (byte j = 0; j < 4; j++) {
 
-						if (current_key[j] != keys_array[i][j]) {
+						if (rfid_current_key[j] != rfid_keys_array[i][j]) {
 								flag = false;
 
 								break;
 						}
 				}
 				if (flag == true) {
-						return true;
+						return 0;
 				}
 		}
 		// delay(1000);
-		return false;
+		return 0;
 
 		// Halt PICC
 		rfid.PICC_HaltA();
@@ -160,7 +162,7 @@ void lcd_print(char str[])
 		int i = 0;
 		while (sub_str != NULL)
 		{
-				lcd.setCursor((CHARS/2) - (strlen(sub_str) / 2), i);
+				lcd.setCursor((LCD_CHARS/2) - (strlen(sub_str) / 2), i);
 				i++;
 				//Serial.println(sub_str);
 				lcd.print(sub_str);
@@ -172,16 +174,16 @@ void lcd_print(char str[])
 
 
 void keyboard_get_key() {
-		if (presed_keys_count < 3) {
+		if (keypad_presed_keys_count < 3) {
 				char key = customKeypad.getKey();
-				presed_keys[presed_keys_count] = ((int)key - 48);
-				presed_keys_count++;
+				keypad_presed_keys[keypad_presed_keys_count] = ((int)key - 48);
+				keypad_presed_keys_count++;
 		}else{
-				memset(presed_keys, 0,3);
-				presed_keys_count = 0;
+				memset(keypad_presed_keys, 0,3);
+				keypad_presed_keys_count = 0;
 				char key = customKeypad.getKey();
-				presed_keys[presed_keys_count] = ((int)key - 48);
-				presed_keys_count++;
+				keypad_presed_keys[keypad_presed_keys_count] = ((int)key - 48);
+				keypad_presed_keys_count++;
 
 		}
 
@@ -196,11 +198,14 @@ void led_enable(/* arguments */) {
 		tm1637.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 }
 
-void led_print(int num_0, int num_1, int num_2, int num_3){
-		tm1637.display(0, num_0);
-		tm1637.display(1, num_1);
-		tm1637.display(2, num_2);
-		tm1637.display(3, num_3);
+void led_print_time(long time){
+
+		int minuts = time / (1000 * 60);
+		int seconds = time % (1000 * 60);
+		tm1637.display(0, minuts /10);
+		tm1637.display(1, minuts % 10);
+		tm1637.display(2, seconds/10);
+		tm1637.display(3, seconds%10);
 }
 
 
@@ -233,9 +238,9 @@ int mpu_check(/* arguments */) {
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
 		sum = _mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -16000, 16000));
 
-		if (sum > second_treshold) {
+		if (sum > mpu_second_treshold) {
 				return 2;
-		}else if (sum > first_treshold) {
+		}else if (sum > mpu_first_treshold) {
 				return 1;
 		}else{
 				return 0;
@@ -249,7 +254,7 @@ void sd_setup(){
 // обратите внимание, что если он не используется в качестве CS пина, SS пин на оборудовании
 // (10 на большинстве плат Arduino, 53 на Arduino Mega) надо оставить в режиме output.
 // иначе функции библиотеки SD library не будут работать.
-		pinMode(10, OUTPUT);
+		pinMode(sd_ss_pin, OUTPUT);
 		if (!SD.begin(10)) {
 				Serial.println("initialization failed!");
 				return;
@@ -260,47 +265,50 @@ void sd_setup(){
 
 char symbol;
 bool sd_load_config(){      // thos func return 1 if config loaded succfully, and 0 if not
-		file = SD.open("config.cfg");
-		if (!file) {
+		config_file = SD.open("config.cfg");
+		if (!config_file) {
 				Serial.println("error opening config.cfg");
 				return false;
 		}
 
 		for (int i; i < CONFIG_SIZE; i++ ) {
 				while (symbol != ' ') {
-						symbol = file.read();
+						symbol = config_file.read();
 						if (isdigit(symbol)) {
 								config[i] = (config[i] * 10) + ((int)(symbol) - 48);
 
 						}
 				}
-				while (file.read() != '\n') {
+				while (config_file.read() != '\n') {
 
 				}
 		}
 		return 1;
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 
-int final_keys_pins[4] = {1,1,1,1} // CHANGE ME BITCH!!!!!!!
-
+int end_keys_pins[4] = {1,1,1,1}; // CHANGE ME BITCH!!!!!!!
+int disactivation_key_pin = 1;
 
 GTimer_ms second(1000);
-GTimer_ms fine_wait(1000);
+GTimer_ms ten_second(10000);
+GTimer_ms ten_minute(600000);
 
 byte startButton = 3;
 
 
 
-bool acces_flag;
+bool access_flag;
 byte trigger;
+
+int fine_wait;
 int del_time;
 int add_time;
 
-unsigned long time;
+long time;
+long access_time;
+
 
 void mpu_alarm(){
 
@@ -310,23 +318,25 @@ void alarm(){
 
 }
 
-void update_led_time(){
-		int minuts = time / (1000 * 60);
-		int seconds = time % (1000 * 60);
-		led_print(minuts /10,minuts % 10,seconds/10, seconds%10);
-}
-
 int keys_check(){
-
+		int pressed_keys_count = 0;
+		for(int i = 0; i<sizeof(end_keys_pins); i++) {
+				if (digitalRead(i)) {
+						pressed_keys_count += 1;
+				}
+		}
+		return pressed_keys_count;
 }
 
 void update(){
 		if (second.isReady()) {
-				update_led_time();
+				led_print_time(time);
+				time -= 1000;
+				access_time -= 1000;
 		}
-		if (fine_wait.isReady()) {
+		if (access_time > 0) {
 				int flag;
-				if ((customKeypad.keyStateChanged() || keys_check())  && !acces_flag) {
+				if ((customKeypad.keyStateChanged() || keys_check())  && !access_flag) {
 						time -= del_time;
 						alarm();
 				}else if ((flag = mpu_check())) {
@@ -338,6 +348,16 @@ void update(){
 						}
 				}
 		}
+		byte rfid_status;
+		if ((rfid_status = rfid_authentificate())) {
+				if (rfid_status == 1) {
+						time += add_time;
+						// bomb reaction
+				}else if(access_time < 0) {
+						access_time = fine_wait;
+						//bomb reaction
+				}
+		}
 }
 
 
@@ -347,12 +367,12 @@ void pre_init(){
 		sd_load_config();
 		rfid_setup();
 		mpu_setup();
-		time = config[0] * 60 * 1000;
+		time = config[0];
 		del_time = config[1];
-		fine_wait.setInterval(config[2] * 1000);
+		fine_wait = config[2];
 		add_time = config[3];
-		first_treshold = config[7];
-		second_treshold = config[8];
+		mpu_first_treshold = config[7];
+		mpu_second_treshold = config[8];
 }
 
 void post_init(){
@@ -384,16 +404,30 @@ void stage_c() {
 
 }
 
+
+bool desactivation_key(){
+		if (digitalRead(disactivation_key_pin)) {
+				return true;
+		}
+		return false;
+}
+
 void final_block(){
+		ten_second.reset();
+		while ((keys_check() != sizeof(end_keys_pins)) || !desactivation_key()) { // add time exception  && time > 0
+				if (ten_second.isReady()) {
+						// sound
+				}
+		}
 
 }
 
 void finish_a(){
-		return;
+		while(true) {delay(1000);} // wait for reset
 }
 
 void finish_b(){
-		return;
+		while(true) {delay(1000);} // wait for reset
 }
 
 void setup() {
