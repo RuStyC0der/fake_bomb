@@ -1,36 +1,92 @@
 
-#include <mp3TF.h>
+#include "Arduino.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
 
-mp3TF mp3tf = mp3TF ();
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
+void printDetail(uint8_t type, int value);
 
-void mp3_setup () {
-	delay (5000);
-	Serial1.begin(9600);
+void setup()
+{
+  mySoftwareSerial.begin(9600);
+  Serial.begin(115200);
 
-	mp3tf.init (&Serial1);
-	Serial.begin (9600);
+  Serial.println();
+  Serial.println(F("DFRobot DFPlayer Mini Demo"));
+  Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+
+  if (!myDFPlayer.begin(mySoftwareSerial)) {  //Use softwareSerial to communicate with mp3.
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    while (true);
+  }
+  Serial.println(F("DFPlayer Mini online."));
+
+  myDFPlayer.volume(20);  //Set volume value. From 0 to 30
+  myDFPlayer.play(1);  //Play the first mp3
 }
 
+void loop()
+{
+  for(int i = 1; i <= 4;i++){
+    myDFPlayer.playMp3Folder(i);
+    delay(10000);
+  }
+}
 
-
-/****************************************************************
- *		mp3TF mp3tf = mp3TF ();
- *	UNO:
- *		Serial.begin (9600);
- *		mp3tf.init (&Serial);
- *	LEONARDO:
- *		Serial1.begin (9600);
- *		mp3tf.init (&Serial1);
- *
- *	function:
- *		mp3tf.play ();		play once
- *		mp3tf.play (1);		play first
- *		mp3tf.play (3);		play third
- *		mp3tf.pause ();		pause
- *		mp3tf.stop ();		stop (на самом деле это таже функция что и пауза)
- *		mp3tf.next ();		next
- *		mp3tf.previous ();	previous
- *		mp3tf.upVolume ();	upVolume
- *		mp3tf.downVolume ();	downVolume
- *		mp3tf.setVolume (20);	setVolume 20
- *****************************************************************/
+void printDetail(uint8_t type, int value) {
+  switch (type) {
+    case TimeOut:
+      Serial.println(F("Time Out!"));
+      break;
+    case WrongStack:
+      Serial.println(F("Stack Wrong!"));
+      break;
+    case DFPlayerCardInserted:
+      Serial.println(F("Card Inserted!"));
+      break;
+    case DFPlayerCardRemoved:
+      Serial.println(F("Card Removed!"));
+      break;
+    case DFPlayerCardOnline:
+      Serial.println(F("Card Online!"));
+      break;
+    case DFPlayerPlayFinished:
+      Serial.print(F("Number:"));
+      Serial.print(value);
+      Serial.println(F(" Play Finished!"));
+      break;
+    case DFPlayerError:
+      Serial.print(F("DFPlayerError:"));
+      switch (value) {
+        case Busy:
+          Serial.println(F("Card not found"));
+          break;
+        case Sleeping:
+          Serial.println(F("Sleeping"));
+          break;
+        case SerialWrongStack:
+          Serial.println(F("Get Wrong Stack"));
+          break;
+        case CheckSumNotMatch:
+          Serial.println(F("Check Sum Not Match"));
+          break;
+        case FileIndexOut:
+          Serial.println(F("File Index Out of Bound"));
+          break;
+        case FileMismatch:
+          Serial.println(F("Cannot Find File"));
+          break;
+        case Advertise:
+          Serial.println(F("In Advertise"));
+          break;
+        default:
+          break;
+      }
+      break;
+    default:
+      break;
+  }
+}
