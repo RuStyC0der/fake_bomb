@@ -155,19 +155,10 @@ void lcd_enable(/* arguments */) {
 		lcd.backlight();
 }
 
-void lcd_print(char str[])
+void lcd_print(int line_num, char str[])
 {
-		char * sub_str;
-		sub_str = strtok (str,"|");
-		int i = 0;
-		while (sub_str != NULL)
-		{
-				lcd.setCursor((LCD_CHARS/2) - (strlen(sub_str) / 2), i);
-				i++;
-				//Serial.println(sub_str);
-				lcd.print(sub_str);
-				sub_str = strtok (NULL, "|");
-		}
+	lcd.setCursor(((LCD_CHARS - strlen(str))/2), line_num);
+	lcd.print(str);
 }
 
 
