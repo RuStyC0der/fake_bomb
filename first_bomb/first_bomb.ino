@@ -58,6 +58,20 @@ int buzzer_pin = 1; //change me
 #define NUMPIXELS 3
 
 ////////////////////////////////////////////////////////////////////////////////
+//button`s
+byte start_button_pin = 3;
+int end_keys_pins[4] = {1,1,1,1}; // CHANGE ME BITCH!!!!!!!
+int disactivation_key_pin = 1;
+
+////////////////////////////////////////////////////////////////////////////////
+//remote control
+int remote_add_time_pin = 1;
+int remote_minus_time_pin = 1;
+int remote_1_pin = 1;
+int remote_2_pin = 1;
+
+
+////////////////////////////////////////////////////////////////////////////////
 //objects Instance
 Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
 
@@ -79,7 +93,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 ////////////////////////////////////////////////////////////////////////////////
 // config array structure
-// 0: work time time
+// 0: work time
 // 1: del time
 // 2: fine wait time
 // 3: add time
@@ -341,15 +355,13 @@ bool sd_load_config(){      // thos func return 1 if config loaded succfully, an
 
 ////////////////////////////////////////////////////////////////////////////////
 
-int end_keys_pins[4] = {1,1,1,1}; // CHANGE ME BITCH!!!!!!!
-int disactivation_key_pin = 1;
+
 
 GTimer_ms ten_ms(10); // try change this to 20 or 50
 GTimer_ms second(1000);
 GTimer_ms ten_second(10000);
 GTimer_ms ten_minute(600000);
 
-byte startButton = 3;
 
 
 
@@ -386,15 +398,15 @@ int keys_check(){
 }
 
 void time_added(){
-	time += add_time;
-	// bomb reaction
+		time += add_time;
+		// bomb reaction
 }
 
 void access_granted(){
-	access_time = fine_wait;
+		access_time = fine_wait;
 
-	// mp3: звук("Доступ дозволено на 1 хвилину")
-	//bomb reaction
+		// mp3: звук("Доступ дозволено на 1 хвилину")
+		//bomb reaction
 }
 
 
@@ -407,6 +419,16 @@ void update(){
 		}
 		if (second.isReady()) {
 				digitalWrite(buzzer_pin, HIGH);
+		}
+
+		if (digitalRead(remote_add_time_pin)) {
+				time += add_time;
+		}else if (digitalRead(remote_minus_time_pin)) {
+				time -= add_time;
+		}else if (digitalRead(remote_1_pin)) {
+				// make move
+		}else if (digitalRead(remote_2_pin)) {
+				//make move
 		}
 
 		if (access_time > 0) {
@@ -425,9 +447,9 @@ void update(){
 		byte rfid_status;
 		if ((rfid_status = rfid_authentificate())) {
 				if (rfid_status == 1) {
-					time_added();
+						time_added();
 				}else if(access_time < 0) {
-					access_granted();
+						access_granted();
 				}
 		}
 }
@@ -440,6 +462,7 @@ void pre_init(){
 		sd_load_config();
 		rfid_setup();
 		mpu_setup();
+
 		time = config[0];
 		del_time = config[1];
 		fine_wait = config[2];
@@ -456,7 +479,7 @@ void post_init(){
 		// mp3: serena or sound
 }
 
-void stage_a() {
+void stage_a(int iteration) { // keyboard
 		while(time < 0) {
 				update();
 				//work
@@ -465,7 +488,7 @@ void stage_a() {
 		finish_b();
 }
 
-void stage_b() {
+void stage_b(int iteration) { // artefacts
 		while(time < 0) {
 				update();
 				//work
@@ -475,7 +498,7 @@ void stage_b() {
 
 }
 
-void stage_c() {
+void stage_c(int iteration) { // jumpes
 		while(time < 0) {
 				update();
 				//work
@@ -494,7 +517,7 @@ bool desactivation_key(){
 }
 
 void final_block(){
-		// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ") интервал 10 секунд
+		// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ")
 		ten_second.reset();
 		lcd_clear();
 		lcd_print(1,"ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦII");
@@ -506,7 +529,7 @@ void final_block(){
 						// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ") интервал 10 секунд
 				}
 
-				if (time <= 0){finish_b();} // finish b if timeout
+				if (time <= 0) {finish_b();} // finish b if timeout
 		}
 }
 
@@ -526,7 +549,7 @@ void finish_b(){
 
 void setup() {
 		pre_init();
-		while (!digitalRead(startButton)) {}
+		while (!digitalRead(start_button_pin)) {} // wait to push start button
 		post_init();
 		for (int i = 0; i < 3; i++) {
 				stage_a();
