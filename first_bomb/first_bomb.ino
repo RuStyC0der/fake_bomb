@@ -366,13 +366,11 @@ long access_time;
 
 void mpu_alarm(){
 		led_strip_color(200, 0, 0);
-//  цвет подсветки красный
 // mp3: звук("Акселерометр зафіксував змінну положення бомби! ")
 }
 
 void alarm(){
 		led_strip_color(255, 0, 0);
-		// цвет подсветки красный
 		// mp3: choice random tematic soumd
 		time -= del_time;
 }
@@ -386,6 +384,19 @@ int keys_check(){
 		}
 		return pressed_keys_count;
 }
+
+void time_added(){
+	time += add_time;
+	// bomb reaction
+}
+
+void access_granted(){
+	access_time = fine_wait;
+
+	// mp3: звук("Доступ дозволено на 1 хвилину")
+	//bomb reaction
+}
+
 
 void update(){
 		if (ten_ms.isReady()) {
@@ -414,13 +425,9 @@ void update(){
 		byte rfid_status;
 		if ((rfid_status = rfid_authentificate())) {
 				if (rfid_status == 1) {
-						time += add_time;
-						// bomb reaction
+					time_added();
 				}else if(access_time < 0) {
-						access_time = fine_wait;
-
-						// mp3: звук("Доступ дозволено на 1 хвилину")
-						//bomb reaction
+					access_granted();
 				}
 		}
 }
@@ -499,7 +506,7 @@ void final_block(){
 						// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ") интервал 10 секунд
 				}
 
-				if (time <= 0){finish_b();} // finish if timeout
+				if (time <= 0){finish_b();} // finish b if timeout
 		}
 }
 
