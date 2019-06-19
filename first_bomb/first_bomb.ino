@@ -70,6 +70,14 @@ int remote_minus_time_pin = 1;
 int remote_1_pin = 1;
 int remote_2_pin = 1;
 
+////////////////////////////////////////////////////////////////////////////////
+//jumper_pins
+int jumper_pins[3] = {1,1,1};
+
+////////////////////////////////////////////////////////////////////////////////
+//aertefacts pins
+int artefact_list_pins[3] = {1,1,1};
+int artefact_led_pins[3] = {1,1,1};
 
 ////////////////////////////////////////////////////////////////////////////////
 //objects Instance
@@ -100,9 +108,14 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 // 4: first key code
 // 5: second key code
 // 6: thrid key code
-// 7: first mpu treshold
-// 8: second mpu treshold
+// 7: first stage code
+// 8: second stage code
+// 9: thrid stage code
+// 10: first mpu treshold
+// 11: second mpu treshold
+
 ////////////////////////////////////////////////////////////////////////////////
+/////////////////sound folder structure
 // 1: Bomb activated
 // 2: Bomb deactivated
 // 3: The accelerometer fixed the variable position of the bomb!
@@ -135,7 +148,7 @@ void mp3_setup()
 				while (true);
 		}
 		Serial.println(F("DFPlayer Mini online."));
-		Player.volume(20);.// 0 - 30
+		Player.volume(20); // 0 - 30
 }
 
 void mp3_play(int track){
@@ -356,6 +369,7 @@ GTimer_ms second(1000);
 GTimer_ms ten_second(10000);
 GTimer_ms ten_minute(600000);
 
+GTimer_ms five_second(5000);
 
 
 
@@ -371,13 +385,15 @@ long access_time;
 
 
 void mpu_alarm(){
+		five_second.reset();
 		led_strip_color(200, 0, 0);
-// mp3: звук("Акселерометр зафіксував змінну положення бомби! ")
+		mp3_play(3);
 }
 
 void alarm(){
+		five_second.reset();
 		led_strip_color(255, 0, 0);
-		// mp3: choice random tematic soumd
+		mp3_play(4);
 		time -= del_time;
 }
 
@@ -399,7 +415,7 @@ void time_added(){
 void access_granted(){
 		access_time = fine_wait;
 
-		// mp3: звук("Доступ дозволено на 1 хвилину")
+		mp3_play(5);
 		//bomb reaction
 }
 
@@ -463,43 +479,120 @@ void pre_init(){
 		add_time = config[3];
 		mpu_first_treshold = config[7];
 		mpu_second_treshold = config[8];
+
+		five_second.setMode(0);
 }
 
 void post_init(){
+		mp3_play(1);
 		led_enable();
 		lcd_enable();
 		lcd_print(1, "Бомбу активовано");
 		lcd_print(1, "Вiдлiк почато");
-		// mp3: serena or sound
 }
+
+
 
 void stage_a(int iteration) { // keyboard
 		while(time < 0) {
 				update();
-				//work
-				return;
+				if (five_second.isReady()) {
+				led_strip_color(0,255,0);
+				char line[strlen("Введiть код #") + 2] = "Введiть код #";
+				line[-1] = (char)(iteration + 48);
+				lcd_print(2, line);
+				if (access_time > 0){
+					char lcd_time[5];
+					int minuts = access_time / (1000 * 60);
+					int seconds = access_time % (1000 * 60);
+					lcd_time[0] = minuts /10;
+					lcd_time[1] = minuts %10;
+					lcd_time[2] = ':';
+					lcd_time[3] = seconds /10;
+					lcd_time[4] = seconds %10;
+
+					lcd_print(3, lcd_time);
+				}
+				if (iteration > 0){
+					lcd_print(4, config[7 + iteration]);
+				}
+
+				if (digitalRead(jumper_pins[iteration])) { /*stage finished*/
+						return;
+				}
 		}
-		finish_b();
+}
+finish_b();
 }
 
 void stage_b(int iteration) { // artefacts
 		while(time < 0) {
 				update();
-				//work
-				return;
-		}
-		finish_b();
+				if (five_second.isReady()) {
+				led_strip_color(0,255,0);
+				char line[strlen("Вставте артефакт #") + 2] = "Вставте артефакт #";
+				line[-1] = (char)(iteration + 48);
+				lcd_print(2, line);
+				if (access_time > 0){
+					char lcd_time[5];
+					int minuts = access_time / (1000 * 60);
+					int seconds = access_time % (1000 * 60);
+					lcd_time[0] = minuts /10;
+					lcd_time[1] = minuts %10;
+					lcd_time[2] = ':';
+					lcd_time[3] = seconds /10;
+					lcd_time[4] = seconds %10;
 
+					lcd_print(3, lcd_time);
+				}
+				if (iteration > 0){
+					lcd_print(4, config[7 + iteration]);
+				}
+				if (digitalRead(artefact_list_pins[iteration])) { /*stage finished*/
+						Adafruit_NeoPixel pixel(NUMPIXELS, artefact_led_pins[iteration], NEO_GRB + NEO_KHZ800);
+						pixel.begin();
+						pixel.clear();
+						pixel.setPixelColor(0, pixel.Color(1, 245, 100));
+						pixel.show();
+
+						return;
+				}
+		}
+}
+finish_b();
 }
 
-void stage_c(int iteration) { // jumpes
+void stage_c(int iteration) { // jumpers
 		while(time < 0) {
 				update();
-				//work
-				return;
+				if (five_second.isReady()) {
+						lcd_clear();
+						led_strip_color(0,255,0);
+						char line[strlen("Вставте перемичку #") + 2] = "Вставте перемичку #";
+						line[-1] = (char)(iteration + 48);
+						lcd_print(2, line);
+						if (access_time > 0){
+							char lcd_time[5];
+							int minuts = access_time / (1000 * 60);
+							int seconds = access_time % (1000 * 60);
+							lcd_time[0] = minuts /10;
+							lcd_time[1] = minuts %10;
+							lcd_time[2] = ':';
+							lcd_time[3] = seconds /10;
+							lcd_time[4] = seconds %10;
+
+							lcd_print(3, lcd_time);
+						}
+						if (iteration > 0){
+							lcd_print(4, config[7 + iteration]);
+						}
+
+						if (digitalRead(jumper_pins[iteration])) { /*stage finished*/
+								return;
+						}
+				}
 		}
 		finish_b();
-
 }
 
 
@@ -511,16 +604,16 @@ bool desactivation_key(){
 }
 
 void final_block(){
-		// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ")
+		mp3_play(9);
 		ten_second.reset();
 		lcd_clear();
-		lcd_print(1,"ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦII");
-		lcd_print(2,"Та натисніть секретні кнопки");
+		lcd_print(2,"ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦII");
+		lcd_print(3,"Та натисніть секретні кнопки");
 		while ((keys_check() != sizeof(end_keys_pins)) || !desactivation_key()) {
 				update();
 
 				if (ten_second.isReady()) {
-						// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ") интервал 10 секунд
+						mp3_play(9);
 				}
 
 				if (time <= 0) {finish_b();} // finish b if timeout
@@ -528,7 +621,7 @@ void final_block(){
 }
 
 void finish_a(){
-// mp3: звук("Бомба дезактивована")
+		mp3_play(2);
 		for (int i = 255; i >= 0; i--) {
 				pixels.setBrightness(i);
 				delay(20);
@@ -546,9 +639,9 @@ void setup() {
 		while (!digitalRead(start_button_pin)) {} // wait to push start button
 		post_init();
 		for (int i = 0; i < 3; i++) {
-				stage_a();
-				stage_b();
-				stage_c();
+				stage_a(i);
+				stage_b(i);
+				stage_c(i);
 		}
 		final_block();
 		finish_a();
