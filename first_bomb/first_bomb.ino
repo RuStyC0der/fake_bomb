@@ -1,3 +1,4 @@
+#include <Adafruit_NeoPixel.h>
 #include "GyverTimer.h"
 #include <SPI.h>
 #include <MFRC522.h>
@@ -7,6 +8,8 @@
 #include <SD.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
 
 
 const byte keypad_COLS = 3; // число строк клавиатуры
@@ -46,15 +49,33 @@ int config[CONFIG_SIZE] = {0};
 int mpu_first_treshold = 1; //change me
 int mpu_second_treshold = 2; //change me
 ////////////////////////////////////////////////////////////////////////////////
+// buzzer
+int buzzer_pin = 1; //change me
+
+////////////////////////////////////////////////////////////////////////////////
+// LED line
+#define PIN   7
+#define NUMPIXELS 3
+
+////////////////////////////////////////////////////////////////////////////////
 //objects Instance
 Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
+
 MPU6050 accel;
+
 TM1637 tm1637(LED_CLK, LED_DIO);
+
 File config_file;
+
 LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
 
 MFRC522 rfid(53, RFID_RST_PIN); // Instance of the class
 MFRC522::MIFARE_Key key;
+
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini Player;
+
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 ////////////////////////////////////////////////////////////////////////////////
 // config array structure
@@ -68,6 +89,37 @@ MFRC522::MIFARE_Key key;
 // 7: first mpu treshold
 // 8: second mpu treshold
 
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+void led_strip_setup() {
+		pixels.begin();
+		pixels.clear();
+}
+
+void led_strip_color(int r, int g, int b) {
+		for (int i = 0; i < NUMPIXELS; i++) {
+				pixels.setPixelColor(i, pixels.Color(r, g, b));
+		}
+		pixels.show();
+}
+
+void mp3_setup()
+{
+		mySoftwareSerial.begin(9600);
+		if (!Player.begin(mySoftwareSerial)) {
+				Serial.println(F("MP3_PLAYER ERROR!"));
+				while (true);
+		}
+		Serial.println(F("DFPlayer Mini online."));
+		Player.volume(20); //Set volume value. From 0 to 30
+}
+
+void mp3_play(int track){
+		Player.play(track);
+}
 
 
 void rfid_setup() {
@@ -155,10 +207,20 @@ void lcd_enable(/* arguments */) {
 		lcd.backlight();
 }
 
+
+void lcd_clear(){
+		lcd.clear();
+}
+
+void lcd_clear(int line){
+		lcd.setCursor(0, line);
+		lcd.print("                    ");
+}
+
 void lcd_print(int line_num, char str[])
 {
-	lcd.setCursor(((LCD_CHARS - strlen(str))/2), line_num);
-	lcd.print(str);
+		lcd.setCursor(((LCD_CHARS - strlen(str))/2), line_num);
+		lcd.print(str);
 }
 
 
@@ -282,6 +344,7 @@ bool sd_load_config(){      // thos func return 1 if config loaded succfully, an
 int end_keys_pins[4] = {1,1,1,1}; // CHANGE ME BITCH!!!!!!!
 int disactivation_key_pin = 1;
 
+GTimer_ms ten_ms(10); // try change this to 20 or 50
 GTimer_ms second(1000);
 GTimer_ms ten_second(10000);
 GTimer_ms ten_minute(600000);
@@ -302,11 +365,16 @@ long access_time;
 
 
 void mpu_alarm(){
-
+		led_strip_color(200, 0, 0);
+//  цвет подсветки красный
+// mp3: звук("Акселерометр зафіксував змінну положення бомби! ")
 }
 
 void alarm(){
-
+		led_strip_color(255, 0, 0);
+		// цвет подсветки красный
+		// mp3: choice random tematic soumd
+		time -= del_time;
 }
 
 int keys_check(){
@@ -320,21 +388,25 @@ int keys_check(){
 }
 
 void update(){
-		if (second.isReady()) {
+		if (ten_ms.isReady()) {
+				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
-				time -= 1000;
-				access_time -= 1000;
+				time -= 10;
+				access_time -= 10;
 		}
+		if (second.isReady()) {
+				digitalWrite(buzzer_pin, HIGH);
+		}
+
 		if (access_time > 0) {
 				int flag;
 				if ((customKeypad.keyStateChanged() || keys_check())  && !access_flag) {
-						time -= del_time;
 						alarm();
 				}else if ((flag = mpu_check())) {
 						if(flag == 1) {
 								mpu_alarm();
 						}else{
-								time -= del_time;
+
 								alarm();
 						}
 				}
@@ -346,6 +418,8 @@ void update(){
 						// bomb reaction
 				}else if(access_time < 0) {
 						access_time = fine_wait;
+
+						// mp3: звук("Доступ дозволено на 1 хвилину")
 						//bomb reaction
 				}
 		}
@@ -354,6 +428,7 @@ void update(){
 
 void pre_init(){
 		Serial.begin(9600);
+		mp3_setup();
 		sd_setup();
 		sd_load_config();
 		rfid_setup();
@@ -369,19 +444,25 @@ void pre_init(){
 void post_init(){
 		led_enable();
 		lcd_enable();
+		lcd_print(1, "Бомбу активовано");
+		lcd_print(1, "Вiдлiк почато");
+		// mp3: serena or sound
 }
 
 void stage_a() {
 		while(time < 0) {
 				update();
+				//work
+				return;
 		}
 		finish_b();
 }
 
 void stage_b() {
 		while(time < 0) {
-
-
+				update();
+				//work
+				return;
 		}
 		finish_b();
 
@@ -389,7 +470,9 @@ void stage_b() {
 
 void stage_c() {
 		while(time < 0) {
-
+				update();
+				//work
+				return;
 		}
 		finish_b();
 
@@ -404,16 +487,29 @@ bool desactivation_key(){
 }
 
 void final_block(){
+		// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ") интервал 10 секунд
 		ten_second.reset();
-		while ((keys_check() != sizeof(end_keys_pins)) || !desactivation_key()) { // add time exception  && time > 0
-				if (ten_second.isReady()) {
-						// sound
-				}
-		}
+		lcd_clear();
+		lcd_print(1,"ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦII");
+		lcd_print(2,"Та натисніть секретні кнопки");
+		while ((keys_check() != sizeof(end_keys_pins)) || !desactivation_key()) {
+				update();
 
+				if (ten_second.isReady()) {
+						// mp3: звук("ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦІЇ") интервал 10 секунд
+				}
+
+				if (time <= 0){finish_b();} // finish if timeout
+		}
 }
 
 void finish_a(){
+// mp3: звук("Бомба дезактивована")
+		for (int i = 255; i >= 0; i--) {
+				pixels.setBrightness(i);
+				delay(20);
+				pixels.show();
+		}
 		while(true) {delay(1000);} // wait for reset
 }
 
