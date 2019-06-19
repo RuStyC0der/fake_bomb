@@ -12,8 +12,8 @@
 #include "DFRobotDFPlayerMini.h"
 
 
-const byte keypad_COLS = 3; // число строк клавиатуры
-const byte keypad_ROWS = 4; // число столбцов клавиатуры
+const byte keypad_COLS = 3;
+const byte keypad_ROWS = 4;
 
 char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 		{'1','2','3'},
@@ -22,8 +22,8 @@ char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 		{'*','0','#'}
 };
 
-byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37}; // к каким выводам подключаем управление строками
-byte keypad_colPins[keypad_COLS] = {39, 41, 43}; // к каким выводам подключаем управление столбцами
+byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
+byte keypad_colPins[keypad_COLS] = {39, 41, 43};
 byte keypad_presed_keys[3];
 byte keypad_presed_keys_count = 0;
 
@@ -69,7 +69,7 @@ File config_file;
 
 LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
 
-MFRC522 rfid(53, RFID_RST_PIN); // Instance of the class
+MFRC522 rfid(53, RFID_RST_PIN);
 MFRC522::MIFARE_Key key;
 
 SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
@@ -88,10 +88,17 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 // 6: thrid key code
 // 7: first mpu treshold
 // 8: second mpu treshold
-
 ////////////////////////////////////////////////////////////////////////////////
-
-
+// 1: Bomb activated
+// 2: Bomb deactivated
+// 3: The accelerometer fixed the variable position of the bomb!
+// 4: The bomb is accelerated for 2 minutes
+// 5: Access is allowed for 1 minute
+// 6: Insert the artifact
+// 7: Insert jumper
+// 8: Enter the code
+// 9: Insert deactivation key
+////////////////////////////////////////////////////////////////////////////////
 
 
 void led_strip_setup() {
@@ -114,7 +121,7 @@ void mp3_setup()
 				while (true);
 		}
 		Serial.println(F("DFPlayer Mini online."));
-		Player.volume(20); //Set volume value. From 0 to 30
+		Player.volume(20);.// 0 - 30
 }
 
 void mp3_play(int track){
@@ -123,28 +130,22 @@ void mp3_play(int track){
 
 
 void rfid_setup() {
-		SPI.begin(); // Init SPI bus
-		rfid.PCD_Init(); // Init MFRC522
-
+		SPI.begin();
+		rfid.PCD_Init();
 		for (byte i = 0; i < 6; i++) {
 				key.keyByte[i] = 0xFF;
 		}
-
-
 }
 
 int rfid_authentificate() {
-
 		if ( !rfid.PICC_IsNewCardPresent())
 				return 0;
-
 		if ( !rfid.PICC_ReadCardSerial())
 				return 0;
 
 		Serial.print(F("PICC type: "));
 		MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
 		Serial.println(rfid.PICC_GetTypeName(piccType));
-
 		// Check is the PICC of Classic MIFARE type
 		if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&
 		    piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
@@ -152,8 +153,6 @@ int rfid_authentificate() {
 				Serial.println(F("Your tag is not of type MIFARE Classic."));
 				return 0;
 		}
-
-
 		for (byte i = 0; i < 4; i++) {
 				rfid_current_key[i] = rfid.uid.uidByte[i];
 				// Serial.print(current_key[i]);
@@ -190,13 +189,9 @@ int rfid_authentificate() {
 		}
 		// delay(1000);
 		return 0;
-
-		// Halt PICC
 		rfid.PICC_HaltA();
-		// Stop encryption on PCD
 		rfid.PCD_StopCrypto1();
 }
-
 
 void lcd_setup()
 {
@@ -206,7 +201,6 @@ void lcd_setup()
 void lcd_enable(/* arguments */) {
 		lcd.backlight();
 }
-
 
 void lcd_clear(){
 		lcd.clear();
@@ -247,7 +241,7 @@ void led_setup() {
 		tm1637.init();
 }
 
-void led_enable(/* arguments */) {
+void led_enable() {
 		tm1637.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 }
 
