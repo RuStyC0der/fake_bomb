@@ -41,16 +41,16 @@ byte rfid_current_key[4];
 int8_t led_NumTab[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; //0~9,A,b,C,d,E,F
 int8_t led_ListDisp[4];
 
-#define CONFIG_SIZE 7
-int sd_ss_pin = 10;
+#define CONFIG_SIZE 12
+int sd_ss_pin = 6;
 int config[CONFIG_SIZE] = {0};
 
 
-int mpu_first_treshold = 1; //change me
-int mpu_second_treshold = 2; //change me
+int mpu_first_treshold = 1000; //change me
+int mpu_second_treshold = 2000; //change me
 ////////////////////////////////////////////////////////////////////////////////
 // buzzer
-int buzzer_pin = 1; //change me
+int buzzer_pin = 8; //change me
 
 ////////////////////////////////////////////////////////////////////////////////
 // LED line
@@ -59,16 +59,16 @@ int buzzer_pin = 1; //change me
 
 ////////////////////////////////////////////////////////////////////////////////
 //button`s
-byte start_button_pin = 3;
+byte start_button_pin = 12;
 int end_keys_pins[4] = {1,1,1,1}; // CHANGE ME BITCH!!!!!!!
-int disactivation_key_pin = 1;
+int disactivation_key_pin = 13;
 
 ////////////////////////////////////////////////////////////////////////////////
 //remote control
-int remote_add_time_pin = 1;
-int remote_minus_time_pin = 1;
-int remote_1_pin = 1;
-int remote_2_pin = 1;
+int remote_add_time_pin = 22;
+int remote_minus_time_pin = 24;
+int remote_1_pin = 26;
+int remote_2_pin = 28;
 
 ////////////////////////////////////////////////////////////////////////////////
 //jumper_pins
