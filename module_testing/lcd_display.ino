@@ -1,32 +1,30 @@
 #include <LCD_1602_RUS.h>
-#define CHARS 20
-#define LINES 4
-LCD_1602_RUS lcd(0x27, CHARS, LINES);
+//LCD display
+#define LCD_CHARS 20
+#define LCD_LINES 4
+
+LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
 
 void lcd_setup()
 {
-        lcd.init();
+		lcd.init();
 }
 
 void lcd_enable(/* arguments */) {
-  lcd.backlight();
+		lcd.backlight();
 }
 
-void lcd_print(char str[])
+void lcd_clear(){
+		lcd.clear();
+}
+
+void lcd_clear(int line){
+		lcd.setCursor(0, line);
+		lcd.print("                    ");
+}
+
+void lcd_print(int line_num, char str[])
 {
-        char * sub_str;
-        sub_str = strtok (str,"|");
-        int i = 0;
-        while (sub_str != NULL)
-        {
-                lcd.setCursor((CHARS/2) - (strlen(sub_str) / 2), i);
-                i++;
-                //Serial.println(sub_str);
-                lcd.print(sub_str);
-                sub_str = strtok (NULL, "|");
-        }
-}
-
-void lcd_clear() {
-        lcd.clear();
+		lcd.setCursor(((LCD_CHARS - strlen(str))/2), line_num);
+		lcd.print(str);
 }

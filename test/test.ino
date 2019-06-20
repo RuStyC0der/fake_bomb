@@ -11,7 +11,6 @@
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //mp3
 SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
@@ -137,6 +136,7 @@ int artefact_led_pins[3] = {1,1,1};
 // 7: Insert jumper
 // 8: Enter the code
 // 9: Insert deactivation key
+
 ////////////////////////////////////////////////////////////////////////////////
 
 
