@@ -24,7 +24,7 @@ char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 
 byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
 byte keypad_colPins[keypad_COLS] = {39, 41, 43};
-byte keypad_presed_keys[3];
+char keypad_presed_keys[3];
 byte keypad_presed_keys_count = 0;
 
 #define RFID_RST_PIN 5
@@ -250,13 +250,13 @@ void lcd_print(int line_num, char str[])
 void keyboard_get_key() {
 		if (keypad_presed_keys_count < 3) {
 				char key = customKeypad.getKey();
-				keypad_presed_keys[keypad_presed_keys_count] = ((int)key - 48);
+				keypad_presed_keys[keypad_presed_keys_count] = key;
 				keypad_presed_keys_count++;
 		}else{
-				memset(keypad_presed_keys, 0,3);
+				memset(keypad_presed_keys, 95,3);
 				keypad_presed_keys_count = 0;
 				char key = customKeypad.getKey();
-				keypad_presed_keys[keypad_presed_keys_count] = ((int)key - 48);
+				keypad_presed_keys[keypad_presed_keys_count] = key;
 				keypad_presed_keys_count++;
 
 		}
@@ -498,6 +498,7 @@ void stage_a(int iteration) { // keyboard
 				update();
 				if (five_second.isReady()) {
 				led_strip_color(0,255,0);
+				lcd_print(1, keypad_presed_keys);
 				char line[strlen("Введiть код #") + 2] = "Введiть код #";
 				line[-1] = (char)(iteration + 48);
 				lcd_print(2, line);
@@ -517,8 +518,14 @@ void stage_a(int iteration) { // keyboard
 					lcd_print(4, config[7 + iteration]);
 				}
 
-				if (digitalRead(jumper_pins[iteration])) { /*stage finished*/
+				if (keypad_presed_keys_count == 3) {
+					int num = 0;
+					for (int i = 0; i < 3; i++){
+						num = (num * 10) + (int)keypad_presed_keys[i] - 48;
+					}
+					if(num == config[iteration + 4]){
 						return;
+					}
 				}
 		}
 }
