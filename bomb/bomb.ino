@@ -12,6 +12,13 @@
 #include "DFRobotDFPlayerMini.h"
 
 
+////////////////////////////////////////////////////////////////////////////////
+//mp3
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini Player;
+
+////////////////////////////////////////////////////////////////////////////////
+//keypad
 const byte keypad_COLS = 3;
 const byte keypad_ROWS = 4;
 
@@ -27,27 +34,50 @@ byte keypad_colPins[keypad_COLS] = {39, 41, 43};
 char keypad_presed_keys[3];
 byte keypad_presed_keys_count = 0;
 
+Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
+
+////////////////////////////////////////////////////////////////////////////////
+//rfid
 #define RFID_RST_PIN 5
 byte rfid_keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
 byte rfid_access_flag_key[4] = {1,1,1,1};
 byte rfid_current_key[4];
 
+MFRC522 rfid(53, RFID_RST_PIN);
+MFRC522::MIFARE_Key key;
+
+////////////////////////////////////////////////////////////////////////////////
+//LCD display
 #define LCD_CHARS 20
 #define LCD_LINES 4
 
+LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
+
+////////////////////////////////////////////////////////////////////////////////
+//LED display
 #define LED_CLK 2
 #define LED_DIO 3
 
 int8_t led_NumTab[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; //0~9,A,b,C,d,E,F
 int8_t led_ListDisp[4];
 
+TM1637 tm1637(LED_CLK, LED_DIO);
+
+////////////////////////////////////////////////////////////////////////////////
+//sd card
 #define CONFIG_SIZE 12
 int sd_ss_pin = 6;
 int config[CONFIG_SIZE] = {0};
 
+File config_file;
 
+////////////////////////////////////////////////////////////////////////////////
+//mpu6050
 int mpu_first_treshold = 1000; //change me
 int mpu_second_treshold = 2000; //change me
+
+MPU6050 accel;
+
 ////////////////////////////////////////////////////////////////////////////////
 // buzzer
 int buzzer_pin = 8; //change me
@@ -56,6 +86,8 @@ int buzzer_pin = 8; //change me
 // LED line
 #define PIN   7
 #define NUMPIXELS 3
+
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 ////////////////////////////////////////////////////////////////////////////////
 //button`s
@@ -80,26 +112,6 @@ int artefact_list_pins[3] = {A0,A1,A2};
 int artefact_led_pins[3] = {A3,A4,A5};
 
 ////////////////////////////////////////////////////////////////////////////////
-//objects Instance
-Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
-
-MPU6050 accel;
-
-TM1637 tm1637(LED_CLK, LED_DIO);
-
-File config_file;
-
-LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
-
-MFRC522 rfid(53, RFID_RST_PIN);
-MFRC522::MIFARE_Key key;
-
-SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
-DFRobotDFPlayerMini Player;
-
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-
-////////////////////////////////////////////////////////////////////////////////
 // config array structure
 // 0: work time
 // 1: del time
@@ -115,7 +127,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 // 11: second mpu treshold
 
 ////////////////////////////////////////////////////////////////////////////////
-/////////////////sound folder structure
+//sound folder structure
 // 1: Bomb activated
 // 2: Bomb deactivated
 // 3: The accelerometer fixed the variable position of the bomb!
