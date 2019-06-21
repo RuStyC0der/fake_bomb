@@ -1,17 +1,21 @@
+#include "DFRobotDFPlayerMini.h"
 
-#include <mp3TF.h>
 
-mp3TF mp3tf = mp3TF ();
 
-void mp3_setup () {
-	delay (5000);
-	Serial1.begin(9600);
-
-	mp3tf.init (&Serial1);
-	Serial.begin (9600);
+void mp3_setup()
+{
+		mySoftwareSerial.begin(9600);
+		if (!Player.begin(mySoftwareSerial)) {
+				Serial.println(F("MP3_PLAYER ERROR!"));
+				while (true);
+		}
+		Serial.println(F("DFPlayer Mini online."));
+		Player.volume(20); // 0 - 30
 }
 
-
+void mp3_play(int track){
+		Player.play(track);
+}
 
 /****************************************************************
  *		mp3TF mp3tf = mp3TF ();

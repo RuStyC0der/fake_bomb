@@ -14,9 +14,12 @@ void led_enable(/* arguments */) {
   tm1637.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 }
 
-void led_print(int num_0, int num_1, int num_2, int num_3){
-        tm1637.display(0, num_0);
-        tm1637.display(1, num_1);
-        tm1637.display(2, num_2);
-        tm1637.display(3, num_3);
+void led_print_time(long time){
+
+		int minuts = time / (1000 * 60);
+		int seconds = time % (1000 * 60);
+		tm1637.display(0, minuts /10);
+		tm1637.display(1, minuts % 10);
+		tm1637.display(2, seconds/10);
+		tm1637.display(3, seconds%10);
 }
