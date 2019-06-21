@@ -20,15 +20,19 @@ Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypa
 void keyboard_get_key() {
 		if (keypad_presed_keys_count < 3) {
 				char key = customKeypad.getKey();
-				keypad_presed_keys[keypad_presed_keys_count] = key;
-				keypad_presed_keys_count++;
+				if(key) {
+						keypad_presed_keys[keypad_presed_keys_count] = key;
+						keypad_presed_keys_count++;
+				}
+
 		}else{
 				memset(keypad_presed_keys, 95,3);
 				keypad_presed_keys_count = 0;
 				char key = customKeypad.getKey();
-				keypad_presed_keys[keypad_presed_keys_count] = key;
-				keypad_presed_keys_count++;
-
+				if (key) {
+						keypad_presed_keys[keypad_presed_keys_count] = key;
+						keypad_presed_keys_count++;
+				}
 		}
 
 }

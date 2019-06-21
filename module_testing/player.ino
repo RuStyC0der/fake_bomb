@@ -1,40 +1,22 @@
+#include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
-
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
 
 void mp3_setup()
 {
-		mySoftwareSerial.begin(9600);
-		if (!Player.begin(mySoftwareSerial)) {
-				Serial.println(F("MP3_PLAYER ERROR!"));
-				while (true);
-		}
-		Serial.println(F("DFPlayer Mini online."));
-		Player.volume(20); // 0 - 30
+  mySoftwareSerial.begin(9600);
+  Serial.begin(115200);
+  if (!myDFPlayer.begin(mySoftwareSerial)) {
+    Serial.println(F("MP3_PLAYER ERROR!"));
+    while (true);
+  }
+  Serial.println(F("DFPlayer Mini online."));
+  myDFPlayer.volume(20);  //Set volume value. From 0 to 30
+  //myDFPlayer.play(4);
 }
 
-void mp3_play(int track){
-		Player.play(track);
+void mp3_play(int number) {
+	myDFPlayer.play(number);
 }
-
-/****************************************************************
- *		mp3TF mp3tf = mp3TF ();
- *	UNO:
- *		Serial.begin (9600);
- *		mp3tf.init (&Serial);
- *	LEONARDO:
- *		Serial1.begin (9600);
- *		mp3tf.init (&Serial1);
- *
- *	function:
- *		mp3tf.play ();		play once
- *		mp3tf.play (1);		play first
- *		mp3tf.play (3);		play third
- *		mp3tf.pause ();		pause
- *		mp3tf.stop ();		stop (на самом деле это таже функция что и пауза)
- *		mp3tf.next ();		next
- *		mp3tf.previous ();	previous
- *		mp3tf.upVolume ();	upVolume
- *		mp3tf.downVolume ();	downVolume
- *		mp3tf.setVolume (20);	setVolume 20
- *****************************************************************/

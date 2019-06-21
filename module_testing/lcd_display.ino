@@ -8,6 +8,7 @@ LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
 void lcd_setup()
 {
 		lcd.init();
+		lcd.noBacklight();
 }
 
 void lcd_enable(/* arguments */) {
