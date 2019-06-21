@@ -12,13 +12,6 @@
 #include "DFRobotDFPlayerMini.h"
 
 
-////////////////////////////////////////////////////////////////////////////////
-//mp3
-SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
-DFRobotDFPlayerMini Player;
-
-////////////////////////////////////////////////////////////////////////////////
-//keypad
 const byte keypad_COLS = 3;
 const byte keypad_ROWS = 4;
 
@@ -34,50 +27,27 @@ byte keypad_colPins[keypad_COLS] = {39, 41, 43};
 char keypad_presed_keys[3];
 byte keypad_presed_keys_count = 0;
 
-Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
-
-////////////////////////////////////////////////////////////////////////////////
-//rfid
 #define RFID_RST_PIN 5
 byte rfid_keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
 byte rfid_access_flag_key[4] = {1,1,1,1};
 byte rfid_current_key[4];
 
-MFRC522 rfid(53, RFID_RST_PIN);
-MFRC522::MIFARE_Key key;
-
-////////////////////////////////////////////////////////////////////////////////
-//LCD display
 #define LCD_CHARS 20
 #define LCD_LINES 4
 
-LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
-
-////////////////////////////////////////////////////////////////////////////////
-//LED display
 #define LED_CLK 2
 #define LED_DIO 3
 
 int8_t led_NumTab[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; //0~9,A,b,C,d,E,F
-int8_t led_ListDisp[6];
+int8_t led_ListDisp[4];
 
-TM1637_6D tm1637_6D(LED_CLK, LED_DIO);
-
-////////////////////////////////////////////////////////////////////////////////
-//sd card
 #define CONFIG_SIZE 12
 int sd_ss_pin = 6;
 int config[CONFIG_SIZE] = {0};
 
-File config_file;
 
-////////////////////////////////////////////////////////////////////////////////
-//mpu6050
 int mpu_first_treshold = 1000; //change me
 int mpu_second_treshold = 2000; //change me
-
-MPU6050 accel;
-
 ////////////////////////////////////////////////////////////////////////////////
 // buzzer
 int buzzer_pin = 8; //change me
@@ -86,8 +56,6 @@ int buzzer_pin = 8; //change me
 // LED line
 #define PIN   7
 #define NUMPIXELS 3
-
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 ////////////////////////////////////////////////////////////////////////////////
 //button`s
@@ -104,12 +72,32 @@ int remote_2_pin = 28;
 
 ////////////////////////////////////////////////////////////////////////////////
 //jumper_pins
-int jumper_pins[3] = {1,1,1};
+int jumper_pins[3] = {A8,A9,A10};
 
 ////////////////////////////////////////////////////////////////////////////////
 //aertefacts pins
-int artefact_list_pins[3] = {1,1,1};
-int artefact_led_pins[3] = {1,1,1};
+int artefact_list_pins[3] = {A0,A1,A2};
+int artefact_led_pins[3] = {A3,A4,A5};
+
+////////////////////////////////////////////////////////////////////////////////
+//objects Instance
+Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
+
+MPU6050 accel;
+
+TM1637 tm1637(LED_CLK, LED_DIO);
+
+File config_file;
+
+LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
+
+MFRC522 rfid(53, RFID_RST_PIN);
+MFRC522::MIFARE_Key key;
+
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini Player;
+
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 ////////////////////////////////////////////////////////////////////////////////
 // config array structure
@@ -127,7 +115,7 @@ int artefact_led_pins[3] = {1,1,1};
 // 11: second mpu treshold
 
 ////////////////////////////////////////////////////////////////////////////////
-//sound folder structure
+/////////////////sound folder structure
 // 1: Bomb activated
 // 2: Bomb deactivated
 // 3: The accelerometer fixed the variable position of the bomb!
@@ -277,23 +265,21 @@ void keyboard_get_key() {
 
 
 void led_setup() {
-		tm1637_6D.init();
+		tm1637.init();
 }
 
 void led_enable() {
-		tm1637_6D.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+		tm1637.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 }
 
 void led_print_time(long time){
 
 		int minuts = time / (1000 * 60);
 		int seconds = time % (1000 * 60);
-		tm1637_6D.display(0, minuts /10);
-		tm1637_6D.display(1, minuts % 10);
-		tm1637_6D.display(2, seconds/10);
-		tm1637_6D.display(3, seconds%10);
-		tm1637_6D.dicplay(4, 0);
-		tm1637_6D.dicplay(5, 0);
+		tm1637.display(0, minuts /10);
+		tm1637.display(1, minuts % 10);
+		tm1637.display(2, seconds/10);
+		tm1637.display(3, seconds%10);
 }
 
 
@@ -482,17 +468,17 @@ void update(){
 void pre_init(){
 		Serial.begin(9600);
 		mp3_setup();
-		// sd_setup();
-		// sd_load_config();
+		sd_setup();
+		sd_load_config();
 		rfid_setup();
 		mpu_setup();
 
-		time = 5400000;
-		del_time = 120000;
-		fine_wait = 10000;
-		add_time = 300000;
-		mpu_first_treshold = 1000;
-		mpu_second_treshold = 2000;
+		time = config[0];
+		del_time = config[1];
+		fine_wait = config[2];
+		add_time = config[3];
+		mpu_first_treshold = config[7];
+		mpu_second_treshold = config[8];
 
 		five_second.setMode(0);
 }
