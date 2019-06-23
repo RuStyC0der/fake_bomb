@@ -1,106 +1,12 @@
-#include <Adafruit_NeoPixel.h>
-#include "GyverTimer.h"
-#include <SPI.h>
-#include <MFRC522.h>
-#include <LCD_1602_RUS.h>
-#include "TM1637.h"
-#include <Keypad.h>
-#include <SD.h>
-#include "I2Cdev.h"
-#include "MPU6050.h"
-#include "SoftwareSerial.h"
-#include "DFRobotDFPlayerMini.h"
-
-
-////////////////////////////////////////////////////////////////////////////////
-//mp3
-SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
-DFRobotDFPlayerMini Player;
-
-////////////////////////////////////////////////////////////////////////////////
-//keypad
-const byte keypad_COLS = 3;
-const byte keypad_ROWS = 4;
-
-char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
-		{'1','2','3'},
-		{'4','5','6'},
-		{'7','8','9'},
-		{'*','0','#'}
-};
-
-byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
-byte keypad_colPins[keypad_COLS] = {39, 41, 43};
-char keypad_presed_keys[3];
-byte keypad_presed_keys_count = 0;
-
-Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
-
-////////////////////////////////////////////////////////////////////////////////
-//rfid
-#define RFID_RST_PIN 5
-byte rfid_keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
-byte rfid_access_flag_key[4] = {1,1,1,1};
-byte rfid_current_key[4];
-
-MFRC522 rfid(53, RFID_RST_PIN);
-MFRC522::MIFARE_Key key;
-
-////////////////////////////////////////////////////////////////////////////////
-//LCD display
-#define LCD_CHARS 20
-#define LCD_LINES 4
-
-LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
-
-////////////////////////////////////////////////////////////////////////////////
-//LED display
-#define LED_CLK 2
-#define LED_DIO 3
-
-int8_t led_NumTab[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; //0~9,A,b,C,d,E,F
-int8_t led_ListDisp[4];
-
-TM1637 tm1637(LED_CLK, LED_DIO);
-
-////////////////////////////////////////////////////////////////////////////////
-//sd card
-#define CONFIG_SIZE 12
-int sd_ss_pin = 6;
-int config[CONFIG_SIZE] = {0};
-
-File config_file;
-
-////////////////////////////////////////////////////////////////////////////////
-//mpu6050
-int mpu_first_treshold = 1000; //change me
-int mpu_second_treshold = 2000; //change me
-
-MPU6050 accel;
-
 ////////////////////////////////////////////////////////////////////////////////
 // buzzer
 int buzzer_pin = 8; //change me
-
-////////////////////////////////////////////////////////////////////////////////
-// LED line
-#define PIN   7
-#define NUMPIXELS 3
-
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 ////////////////////////////////////////////////////////////////////////////////
 //button`s
 byte start_button_pin = 12;
 int end_keys_pins[4] = {1,1,1,1}; // CHANGE ME BITCH!!!!!!!
 int disactivation_key_pin = 13;
-
-////////////////////////////////////////////////////////////////////////////////
-//remote control
-int remote_add_time_pin = 22;
-int remote_minus_time_pin = 24;
-int remote_1_pin = 26;
-int remote_2_pin = 28;
 
 ////////////////////////////////////////////////////////////////////////////////
 //jumper_pins
@@ -137,8 +43,14 @@ int artefact_led_pins[3] = {1,1,1};
 // 7: Insert jumper
 // 8: Enter the code
 // 9: Insert deactivation key
-////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+// LED line
+#include <Adafruit_NeoPixel.h>
+#define PIN   7
+#define NUMPIXELS 3
+
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void led_strip_setup() {
 		pixels.begin();
@@ -152,21 +64,76 @@ void led_strip_color(int r, int g, int b) {
 		pixels.show();
 }
 
-void mp3_setup()
+////////////////////////////////////////////////////////////////////////////////
+//SD card
+#include <SD.h>
+
+File file;
+
+#define CONFIG_SIZE 12
+long config[CONFIG_SIZE] = {0};
+
+void sd_setup()
 {
-		mySoftwareSerial.begin(9600);
-		if (!Player.begin(mySoftwareSerial)) {
-				Serial.println(F("MP3_PLAYER ERROR!"));
-				while (true);
+		Serial.begin(9600);
+		Serial.print("Initializing SD card...");
+// на Ethernet шилде CS соответствует 4 пину. По умолчанию он установлен в режим output
+// обратите внимание, что если он не используется в качестве CS пина, SS пин на оборудовании
+// (10 на большинстве плат Arduino, 53 на Arduino Mega) надо оставить в режиме output.
+// иначе функции библиотеки SD library не будут работать.
+		if (!SD.begin(6)) {
+				Serial.println("initialization failed!");
+				return;
 		}
-		Serial.println(F("DFPlayer Mini online."));
-		Player.volume(20); // 0 - 30
+		Serial.println("initialization done.");
+
 }
 
-void mp3_play(int track){
-		Player.play(track);
+char symbol;
+bool sd_load_config(){      // thos func return 1 if config loaded succfully, and 0 if not
+		pinMode(6, OUTPUT);
+
+		file = SD.open("config.cfg");
+		if (!file) {
+				Serial.println("error opening config.cfg");
+				pinMode(6, INPUT);
+
+				return false;
+		}
+
+		for (int i = 0; i < CONFIG_SIZE; i++) {
+				// Serial.println(i);
+				while (symbol != ' ') {
+						symbol = file.read();
+						// Serial.println(symbol);
+						if (isdigit(symbol)) {
+								config[i] = (config[i] * 10) + ((int)(symbol) - 48);
+						}
+				}
+				while (1) {
+						symbol = file.read();
+						// Serial.println(symbol);
+						if (symbol == '\n') {
+								break;
+						}
+				}
+		}
+		pinMode(6, INPUT);
+		return 1;
+
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//rfid
+#include <MFRC522.h>
+#include <SPI.h>
+#define RFID_RST_PIN 5
+byte rfid_keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
+byte rfid_access_flag_key[4] = {1,1,1,1};
+byte rfid_current_key[4];
+
+MFRC522 rfid(53, RFID_RST_PIN);
+MFRC522::MIFARE_Key key;
 
 void rfid_setup() {
 		SPI.begin();
@@ -232,70 +199,74 @@ int rfid_authentificate() {
 		rfid.PCD_StopCrypto1();
 }
 
-void lcd_setup()
-{
-		lcd.init();
-}
+////////////////////////////////////////////////////////////////////////////////
+//remote control
+#define chanel_pin_1 22
+#define chanel_pin_2 24
+#define chanel_pin_3 26
+#define chanel_pin_4 28
 
-void lcd_enable(/* arguments */) {
-		lcd.backlight();
-}
-
-void lcd_clear(){
-		lcd.clear();
-}
-
-void lcd_clear(int line){
-		lcd.setCursor(0, line);
-		lcd.print("                    ");
-}
-
-void lcd_print(int line_num, char str[])
-{
-		lcd.setCursor(((LCD_CHARS - strlen(str))/2), line_num);
-		lcd.print(str);
-}
-
-
-
-
-void keyboard_get_key() {
-		if (keypad_presed_keys_count < 3) {
-				char key = customKeypad.getKey();
-				keypad_presed_keys[keypad_presed_keys_count] = key;
-				keypad_presed_keys_count++;
+int remote_check(){
+		if (digitalRead(chanel_pin_1)) {
+				return 1;
+		}else if (digitalRead(chanel_pin_2)) {
+				return 2;
+		}else if(digitalRead(chanel_pin_3)) {
+				return 3;
+		}else if (digitalRead(chanel_pin_4)) {
+				return 4;
 		}else{
-				memset(keypad_presed_keys, 95,3);
-				keypad_presed_keys_count = 0;
-				char key = customKeypad.getKey();
-				keypad_presed_keys[keypad_presed_keys_count] = key;
-				keypad_presed_keys_count++;
-
+				return 0;
 		}
-
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// MP3 PLAYER
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
 
-void led_setup() {
-		tm1637.init();
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
+
+void mp3_setup()
+{
+		mySoftwareSerial.begin(9600);
+		Serial.begin(115200);
+		if (!myDFPlayer.begin(mySoftwareSerial)) {
+				Serial.println(F("MP3_PLAYER ERROR!"));
+				while (true);
+		}
+		Serial.println(F("DFPlayer Mini online."));
+		myDFPlayer.volume(20); //Set volume value. From 0 to 30
+		//myDFPlayer.play(4);
 }
 
-void led_enable() {
-		tm1637.set(7);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+void mp3_play(int number) {
+		myDFPlayer.play(number);
 }
 
-void led_print_time(long time){
+////////////////////////////////////////////////////////////////////////////////
+//mpu6050
+#include "I2Cdev.h"
+#include "MPU6050.h"
 
-		int minuts = time / (1000 * 60);
-		int seconds = time % (1000 * 60);
-		tm1637.display(0, minuts /10);
-		tm1637.display(1, minuts % 10);
-		tm1637.display(2, seconds/10);
-		tm1637.display(3, seconds%10);
-}
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+	#include "Wire.h"
+#endif
+// #define mila 123
+// extern int config[];
 
+int mpu_first_treshold = 2000; //change me
+int mpu_second_treshold = 4000; //change me
+
+MPU6050 accel;
 
 void mpu_setup(/* arguments */) {
+	#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+		Wire.begin();
+	#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+		Fastwire::setup(400, true);
+	#endif
 		accel.initialize(); // первичная настройка датчика
 		Serial.println(accel.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 }
@@ -323,6 +294,7 @@ int mpu_check(/* arguments */) {
 
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
 		sum = _mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -16000, 16000));
+		Serial.println(sum);
 
 		if (sum > mpu_second_treshold) {
 				return 2;
@@ -333,62 +305,132 @@ int mpu_check(/* arguments */) {
 		}
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//LED display
+#include "TM1637_6D.h"
 
-void sd_setup(){
-		Serial.print("Initializing SD card...");
-// на Ethernet шилде CS соответствует 4 пину. По умолчанию он установлен в режим output
-// обратите внимание, что если он не используется в качестве CS пина, SS пин на оборудовании
-// (10 на большинстве плат Arduino, 53 на Arduino Mega) надо оставить в режиме output.
-// иначе функции библиотеки SD library не будут работать.
-		pinMode(sd_ss_pin, OUTPUT);
-		if (!SD.begin(10)) {
-				Serial.println("initialization failed!");
-				return;
-		}
-		Serial.println("initialization done.");
+#define CLK 2 //pins definitions for TM1637 and can be changed to other ports
+#define DIO 3
+
+TM1637_6D tm1637_6D(CLK,DIO);
+int8_t ListDispPoint[6] = {POINT_OFF,POINT_OFF,POINT_ON,POINT_OFF,POINT_ON,POINT_OFF};
+int8_t ListDisp[6] = {0,0,0,0,0,0};
+
+void led_setup() {
+		tm1637_6D.init();
+		tm1637_6D.set(BRIGHTEST);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 
 }
 
-char symbol;
-bool sd_load_config(){      // thos func return 1 if config loaded succfully, and 0 if not
-		config_file = SD.open("config.cfg");
-		if (!config_file) {
-				Serial.println("error opening config.cfg");
-				return false;
-		}
+void led_enable(/* arguments */) {
+		tm1637_6D.set(BRIGHTEST);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+		tm1637_6D.display(ListDisp,ListDispPoint);
+}
 
-		for (int i; i < CONFIG_SIZE; i++ ) {
-				while (symbol != ' ') {
-						symbol = config_file.read();
-						if (isdigit(symbol)) {
-								config[i] = (config[i] * 10) + ((int)(symbol) - 48);
-
-						}
-				}
-				while (config_file.read() != '\n') {
-
-				}
-		}
-		return 1;
+void led_print_time(long time){
+		int minuts = time / 60000;
+		int seconds = time % 60000 / 1000;
+		int ms = (time % 60000) % 1000 / 10;
+		ListDisp[5] = minuts /10;
+		ListDisp[4] =  minuts % 10;
+		ListDisp[3] =  seconds/10;
+		ListDisp[2] =  seconds%10;
+		ListDisp[1] = ms /10;
+		ListDisp[0] = ms % 10;
+		tm1637_6D.display(ListDisp, ListDispPoint);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//LCD display
+#include <LCD_1602_RUS.h>
+#define LCD_CHARS 20
+#define LCD_LINES 4
+
+LCD_1602_RUS lcd(0x27, LCD_CHARS, LCD_LINES);
+
+void lcd_setup()
+{
+		lcd.init();
+		lcd.noBacklight();
+}
+
+void lcd_enable(/* arguments */) {
+		lcd.backlight();
+}
+
+void lcd_clear(){
+		lcd.clear();
+}
+
+void lcd_clear(int line){
+		lcd.setCursor(0, line);
+		lcd.print("                    ");
+}
+
+void lcd_print(int line_num, char str[])
+{
+		lcd.setCursor(0, line_num);
+		lcd.print(str);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//keypad
+#include <Keypad.h>
+const byte keypad_COLS = 3;
+const byte keypad_ROWS = 4;
+
+char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
+		{'1','2','3'},
+		{'4','5','6'},
+		{'7','8','9'},
+		{'*','0','#'}
+};
+
+byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
+byte keypad_colPins[keypad_COLS] = {39, 41, 43};
+char keypad_presed_keys[3];
+byte keypad_presed_keys_count = 0;
+
+Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
+
+void keypad_get_key() {
+		if (keypad_presed_keys_count < 3) {
+				char key = customKeypad.getKey();
+				if(key) {
+						keypad_presed_keys[keypad_presed_keys_count] = key;
+						keypad_presed_keys_count++;
+				}
+
+		}else{
+				memset(keypad_presed_keys, 95,3);
+				keypad_presed_keys_count = 0;
+				char key = customKeypad.getKey();
+				if (key) {
+						keypad_presed_keys[keypad_presed_keys_count] = key;
+						keypad_presed_keys_count++;
+				}
+		}
+
+}
 
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// logic
+#include "GyverTimer.h"
 
-GTimer_ms ten_ms(10); // try change this to 20 or 50
+GTimer_ms ten_ms(40); // try change this to 20 or 50
 GTimer_ms second(1000);
 GTimer_ms ten_second(10000);
-GTimer_ms ten_minute(600000);
 
 GTimer_ms five_second(5000);
 
 
 
-bool access_flag;
-byte trigger;
 
-int fine_wait;
+int access_time_config;
 int del_time;
 int add_time;
 
@@ -425,8 +467,7 @@ void time_added(){
 }
 
 void access_granted(){
-		access_time = fine_wait;
-
+		access_time = access_time_config;
 		mp3_play(5);
 		//bomb reaction
 }
@@ -436,58 +477,76 @@ void update(){
 		if (ten_ms.isReady()) {
 				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
-				time -= 10;
-				access_time -= 10;
+				time -= 40;
+				access_time -= 40;
 		}
 		if (second.isReady()) {
 				digitalWrite(buzzer_pin, HIGH);
+				switch (remote_check()) {
+				case 0:
+						break;
+				case 1:
+						time += add_time;
+						break;
+				case 2:
+						time -= del_time;
+						break;
+				case 3:
+						// move for 3 chanel triger
+						break;
+				case 4:
+						// move for 4 chanel triger
+						break;
+				}
 		}
 
-		if (digitalRead(remote_add_time_pin)) {
-				time += add_time;
-		}else if (digitalRead(remote_minus_time_pin)) {
-				time -= add_time;
-		}else if (digitalRead(remote_1_pin)) {
-				// make move
-		}else if (digitalRead(remote_2_pin)) {
-				//make move
-		}
-
-		if (access_time > 0) {
-				int flag;
-				if ((customKeypad.keyStateChanged() || keys_check())  && !access_flag) {
-						alarm();
-				}else if ((flag = mpu_check())) {
-						if(flag == 1) {
+		if (access_time < 0) {
+				switch (rfid_authentificate()) {
+				case 0:
+						break;
+				case 1:
+						time_added();
+						break;
+				case 2:
+						access_granted();
+						break;
+				}
+				if (five_second.isReady()) {
+						switch (mpu_check()) {
+						case 0:
+								break;
+						case 1:
 								mpu_alarm();
-						}else{
+								break;
+						case 2:
+								alarm();
+								break;
+						}
 
+						if ((customKeypad.keyStateChanged() || keys_check())) {
 								alarm();
 						}
 				}
 		}
-		byte rfid_status;
-		if ((rfid_status = rfid_authentificate())) {
-				if (rfid_status == 1) {
-						time_added();
-				}else if(access_time < 0) {
-						access_granted();
-				}
-		}
+
 }
 
 
+
 void pre_init(){
+		pinMode(buzzer_pin, OUTPUT);
 		Serial.begin(9600);
-		mp3_setup();
+		// mp3_setup();
 		sd_setup();
 		sd_load_config();
 		rfid_setup();
 		mpu_setup();
+		led_setup();
+		lcd_setup();
 
 		time = config[0];
 		del_time = config[1];
-		fine_wait = config[2];
+		access_time_config = config[2];
 		add_time = config[3];
 		mpu_first_treshold = config[7];
 		mpu_second_treshold = config[8];
@@ -496,89 +555,84 @@ void pre_init(){
 }
 
 void post_init(){
-		mp3_play(1);
+		// mp3_play(1);
 		led_enable();
 		lcd_enable();
-		lcd_print(1, "Бомбу активовано");
-		lcd_print(1, "Вiдлiк почато");
+		lcd_print(1, "         Бoмбy akтивoвaнo");
+		lcd_print(2, "          Biдлik пoчaтo");
 }
 
+void lcd_time_print(){
+		char lcd_time[5];
+		int minuts = access_time / (1000 * 60);
+		int seconds = access_time % (1000 * 60);
+		lcd_time[0] = minuts /10;
+		lcd_time[1] = minuts %10;
+		lcd_time[2] = ':';
+		lcd_time[3] = seconds /10;
+		lcd_time[4] = seconds %10;
 
+		lcd_print(3, lcd_time);
+}
 
 void stage_a(int iteration) { // keyboard
 		while(time < 0) {
 				update();
 				if (five_second.isReady()) {
-				led_strip_color(0,255,0);
-				lcd_print(1, keypad_presed_keys);
-				char line[strlen("Введiть код #") + 2] = "Введiть код #";
-				line[-1] = (char)(iteration + 48);
-				lcd_print(2, line);
-				if (access_time > 0){
-					char lcd_time[5];
-					int minuts = access_time / (1000 * 60);
-					int seconds = access_time % (1000 * 60);
-					lcd_time[0] = minuts /10;
-					lcd_time[1] = minuts %10;
-					lcd_time[2] = ':';
-					lcd_time[3] = seconds /10;
-					lcd_time[4] = seconds %10;
+						led_strip_color(0,255,0);
+						lcd_print(1, keypad_presed_keys);
+						char line[strlen("Введiть код #") + 2] = "Введiть код #";
+						line[-1] = (char)(iteration + 48);
+						lcd_print(2, line);
+						if (access_time > 0) {
+								lcd_time_print();
+						}
+						if (iteration > 0) {
+								lcd_print(4, config[7 + iteration]);
+						}
 
-					lcd_print(3, lcd_time);
-				}
-				if (iteration > 0){
-					lcd_print(4, config[7 + iteration]);
-				}
-
-				if (keypad_presed_keys_count == 3) {
-					int num = 0;
-					for (int i = 0; i < 3; i++){
-						num = (num * 10) + (int)keypad_presed_keys[i] - 48;
-					}
-					if(num == config[iteration + 4]){
-						return;
-					}
+						if (keypad_presed_keys_count == 3) {
+								int num = 0;
+								for (int i = 0; i < 3; i++) {
+										num = (num * 10) + (int)keypad_presed_keys[i] - 48;
+								}
+								if(num == config[iteration + 4]) {
+										return;
+								}
+						}
 				}
 		}
+		finish_b();
 }
-finish_b();
-}
+
+
 
 void stage_b(int iteration) { // artefacts
 		while(time < 0) {
 				update();
 				if (five_second.isReady()) {
-				led_strip_color(0,255,0);
-				char line[strlen("Вставте артефакт #") + 2] = "Вставте артефакт #";
-				line[-1] = (char)(iteration + 48);
-				lcd_print(2, line);
-				if (access_time > 0){
-					char lcd_time[5];
-					int minuts = access_time / (1000 * 60);
-					int seconds = access_time % (1000 * 60);
-					lcd_time[0] = minuts /10;
-					lcd_time[1] = minuts %10;
-					lcd_time[2] = ':';
-					lcd_time[3] = seconds /10;
-					lcd_time[4] = seconds %10;
+						led_strip_color(0,255,0);
+						char line[strlen("Вставте артефакт #") + 2] = "Вставте артефакт #";
+						line[-1] = (char)(iteration + 48);
+						lcd_print(2, line);
+						if (access_time > 0) {
+								lcd_time_print();
+						}
+						if (iteration > 0) {
+								lcd_print(4, config[7 + iteration]);
+						}
+						if (digitalRead(artefact_list_pins[iteration])) { /*stage finished*/
+								Adafruit_NeoPixel pixel(NUMPIXELS, artefact_led_pins[iteration], NEO_GRB + NEO_KHZ800);
+								pixel.begin();
+								pixel.clear();
+								pixel.setPixelColor(0, pixel.Color(1, 245, 100));
+								pixel.show();
 
-					lcd_print(3, lcd_time);
-				}
-				if (iteration > 0){
-					lcd_print(4, config[7 + iteration]);
-				}
-				if (digitalRead(artefact_list_pins[iteration])) { /*stage finished*/
-						Adafruit_NeoPixel pixel(NUMPIXELS, artefact_led_pins[iteration], NEO_GRB + NEO_KHZ800);
-						pixel.begin();
-						pixel.clear();
-						pixel.setPixelColor(0, pixel.Color(1, 245, 100));
-						pixel.show();
-
-						return;
+								return;
+						}
 				}
 		}
-}
-finish_b();
+		finish_b();
 }
 
 void stage_c(int iteration) { // jumpers
@@ -590,20 +644,11 @@ void stage_c(int iteration) { // jumpers
 						char line[strlen("Вставте перемичку #") + 2] = "Вставте перемичку #";
 						line[-1] = (char)(iteration + 48);
 						lcd_print(2, line);
-						if (access_time > 0){
-							char lcd_time[5];
-							int minuts = access_time / (1000 * 60);
-							int seconds = access_time % (1000 * 60);
-							lcd_time[0] = minuts /10;
-							lcd_time[1] = minuts %10;
-							lcd_time[2] = ':';
-							lcd_time[3] = seconds /10;
-							lcd_time[4] = seconds %10;
-
-							lcd_print(3, lcd_time);
+						if (access_time > 0) {
+								lcd_time_print();
 						}
-						if (iteration > 0){
-							lcd_print(4, config[7 + iteration]);
+						if (iteration > 0) {
+								lcd_print(4, config[7 + iteration]);
 						}
 
 						if (digitalRead(jumper_pins[iteration])) { /*stage finished*/
@@ -652,7 +697,6 @@ void finish_a(){
 void finish_b(){
 		while(true) {delay(1000);} // wait for reset
 }
-
 void setup() {
 		pre_init();
 		while (!digitalRead(start_button_pin)) {} // wait to push start button

@@ -17,7 +17,7 @@ byte keypad_presed_keys_count = 0;
 
 Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
 
-void keyboard_get_key() {
+void keypad_get_key() {
 		if (keypad_presed_keys_count < 3) {
 				char key = customKeypad.getKey();
 				if(key) {
