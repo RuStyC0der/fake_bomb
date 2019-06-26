@@ -36,3 +36,12 @@ void keypad_get_key() {
 		}
 
 }
+
+bool keypad_check(){
+	if (customKeypad.getKey()){
+		return true;
+	}else{
+		return false;
+	}
+
+}

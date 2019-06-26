@@ -5,17 +5,17 @@ int buzzer_pin = 8; //change me
 ////////////////////////////////////////////////////////////////////////////////
 //button`s
 byte start_button_pin = 12;
-int end_keys_pins[4] = {1,1,1,1}; // CHANGE ME BITCH!!!!!!!
+int end_keys_pins[4] = {14,15,16,17}; // CHANGE ME BITCH!!!!!!!
 int disactivation_key_pin = 13;
 
 ////////////////////////////////////////////////////////////////////////////////
 //jumper_pins
-int jumper_pins[3] = {1,1,1};
+int jumper_pins[3] = {A8,A9,A10};
 
 ////////////////////////////////////////////////////////////////////////////////
 //aertefacts pins
-int artefact_list_pins[3] = {1,1,1};
-int artefact_led_pins[3] = {1,1,1};
+int artefact_list_pins[3] = {30,32,33};
+int artefact_led_pins[3] = {36,38,40};
 
 ////////////////////////////////////////////////////////////////////////////////
 // config array structure
@@ -70,18 +70,22 @@ void led_strip_color(int r, int g, int b) {
 
 File file;
 
-#define CONFIG_SIZE 12
+#define CONFIG_SIZE 13
+#define SD_POWER_PIN A7
+#define SD_SS_PIN 6
 long config[CONFIG_SIZE] = {0};
 
 void sd_setup()
 {
-		Serial.begin(9600);
+		pinMode(SD_POWER_PIN, OUTPUT);
+		sd_power(1);
+		pinMode(SD_SS_PIN, OUTPUT);
 		Serial.print("Initializing SD card...");
 // на Ethernet шилде CS соответствует 4 пину. По умолчанию он установлен в режим output
 // обратите внимание, что если он не используется в качестве CS пина, SS пин на оборудовании
 // (10 на большинстве плат Arduino, 53 на Arduino Mega) надо оставить в режиме output.
 // иначе функции библиотеки SD library не будут работать.
-		if (!SD.begin(6)) {
+		if (!SD.begin(SD_SS_PIN)) {
 				Serial.println("initialization failed!");
 				return;
 		}
@@ -91,13 +95,12 @@ void sd_setup()
 
 char symbol;
 bool sd_load_config(){      // thos func return 1 if config loaded succfully, and 0 if not
-		pinMode(6, OUTPUT);
 
 		file = SD.open("config.cfg");
 		if (!file) {
 				Serial.println("error opening config.cfg");
 				pinMode(6, INPUT);
-
+				sd_power(0);
 				return false;
 		}
 
@@ -118,18 +121,24 @@ bool sd_load_config(){      // thos func return 1 if config loaded succfully, an
 						}
 				}
 		}
-		pinMode(6, INPUT);
+		sd_power(0);
 		return 1;
 
 }
-
+void sd_power(bool flag){
+		if (flag) {
+				digitalWrite(SD_POWER_PIN, LOW);
+		}else{
+				digitalWrite(SD_POWER_PIN, HIGH);
+		}
+}
 ////////////////////////////////////////////////////////////////////////////////
 //rfid
 #include <MFRC522.h>
 #include <SPI.h>
 #define RFID_RST_PIN 5
-byte rfid_keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
-byte rfid_access_flag_key[4] = {1,1,1,1};
+byte rfid_keys_array[4][4] = {{78,189,226,33},{126,35,94,33},{38,136,22,18},{18,164,106,29}};
+byte rfid_access_flag_key[4] = {48,110,185,164};
 byte rfid_current_key[4];
 
 MFRC522 rfid(53, RFID_RST_PIN);
@@ -161,7 +170,7 @@ int rfid_authentificate() {
 		}
 		for (byte i = 0; i < 4; i++) {
 				rfid_current_key[i] = rfid.uid.uidByte[i];
-				// Serial.print(current_key[i]);
+				// Serial.print(rfid_current_key[i]);
 				// Serial.print(",");
 		}
 		// Serial.println();
@@ -190,7 +199,8 @@ int rfid_authentificate() {
 						}
 				}
 				if (flag == true) {
-						return 0;
+						memset(rfid_keys_array[i], 0, sizeof(rfid_keys_array[i]));
+						return 1;
 				}
 		}
 		// delay(1000);
@@ -221,7 +231,7 @@ int remote_check(){
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// MP3 PLAYER
+// MP3_PLAYER
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
@@ -231,7 +241,6 @@ DFRobotDFPlayerMini myDFPlayer;
 void mp3_setup()
 {
 		mySoftwareSerial.begin(9600);
-		Serial.begin(115200);
 		if (!myDFPlayer.begin(mySoftwareSerial)) {
 				Serial.println(F("MP3_PLAYER ERROR!"));
 				while (true);
@@ -242,7 +251,7 @@ void mp3_setup()
 }
 
 void mp3_play(int number) {
-		myDFPlayer.play(number);
+		myDFPlayer.playMp3Folder(number - 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -290,11 +299,11 @@ float _mpu_filter(float val) {
 
 int mpu_check(/* arguments */) {
 		int16_t ax_raw, ay_raw, az_raw, gx_raw, gy_raw, gz_raw;
-		float sum;
+		unsigned int sum;
 
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
-		sum = _mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -16000, 16000));
-		Serial.println(sum);
+		sum = abs((constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
+		// Serial.println(sum);
 
 		if (sum > mpu_second_treshold) {
 				return 2;
@@ -388,7 +397,7 @@ char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 
 byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
 byte keypad_colPins[keypad_COLS] = {39, 41, 43};
-char keypad_presed_keys[3];
+char keypad_presed_keys[3] = "___";
 byte keypad_presed_keys_count = 0;
 
 Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
@@ -413,6 +422,14 @@ void keypad_get_key() {
 
 }
 
+bool keypad_check(){
+		if (customKeypad.getKey()) {
+				return true;
+		}else{
+				return false;
+		}
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -421,30 +438,37 @@ void keypad_get_key() {
 // logic
 #include "GyverTimer.h"
 
-GTimer_ms ten_ms(40); // try change this to 20 or 50
+GTimer_ms step_time(40); // try change this to 20 or 50
 GTimer_ms second(1000);
 GTimer_ms ten_second(10000);
 
+
 GTimer_ms five_second(5000);
 
+GTimer_ms ignore_time(10000);
 
 
-
-int access_time_config;
-int del_time;
-int add_time;
+long access_time_config;
+long del_time;
+long add_time;
 
 long time;
-long access_time;
+long access_time = 0;
+
+bool alarm_flag = true;
 
 
 void mpu_alarm(){
+		bool alarm_flag = true;
+		ignore_time.reset();
 		five_second.reset();
 		led_strip_color(200, 0, 0);
 		mp3_play(3);
 }
 
 void alarm(){
+		bool alarm_flag = true;
+		ignore_time.reset();
 		five_second.reset();
 		led_strip_color(255, 0, 0);
 		mp3_play(4);
@@ -454,7 +478,7 @@ void alarm(){
 int keys_check(){
 		int pressed_keys_count = 0;
 		for(int i = 0; i<sizeof(end_keys_pins); i++) {
-				if (digitalRead(i)) {
+				if (digitalRead(end_keys_pins[i])) {
 						pressed_keys_count += 1;
 				}
 		}
@@ -462,29 +486,48 @@ int keys_check(){
 }
 
 void time_added(){
-		time += add_time;
+		time += 300000;
 		// bomb reaction
 }
 
 void access_granted(){
 		access_time = access_time_config;
 		mp3_play(5);
+
 		//bomb reaction
 }
 
 
 void update(){
-		if (ten_ms.isReady()) {
+		if (step_time.isReady()) {
 				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
 				time -= 40;
 				access_time -= 40;
-		}
-		if (second.isReady()) {
-				digitalWrite(buzzer_pin, HIGH);
-		}
+				if (second.isReady()) {
+						// Serial.println(access_time);
+						// Serial.println(add_time);
+						// Serial.println(del);
 
-		if (access_time < 0) {
+						digitalWrite(buzzer_pin, HIGH);
+						switch (remote_check()) {
+						case 0:
+								break;
+						case 1:
+								time += 300000;
+								break;
+						case 2:
+								time -= 300000;
+								break;
+						case 3:
+								// move for 3 chanel triger
+								break;
+						case 4:
+								// move for 4 chanel triger
+								break;
+						}
+				}
+
 				switch (rfid_authentificate()) {
 				case 0:
 						break;
@@ -492,24 +535,32 @@ void update(){
 						time_added();
 						break;
 				case 2:
-						access_granted();
+						if (access_time < 0) {
+								access_granted();
+						}
 						break;
 				}
-				if (five_second.isReady()) {
-						switch (mpu_check()) {
-						case 0:
-								break;
-						case 1:
-								mpu_alarm();
-								break;
-						case 2:
-								alarm();
-								break;
-						}
 
-						if ((customKeypad.keyStateChanged() || keys_check())) {
-								alarm();
+				if (access_time < 0) {
+						if (ignore_time.isReady()) {
+								switch (mpu_check()) {
+								case 0:
+										break;
+								case 1:
+										mpu_alarm();
+										break;
+								case 2:
+										alarm();
+										break;
+								}
+
+								// if (keypad_check() || keys_check()) {
+								if (keypad_check()) {
+										alarm();
+								}
 						}
+				}else{
+						keypad_get_key();
 				}
 		}
 
@@ -520,60 +571,76 @@ void update(){
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
 		Serial.begin(9600);
-		// mp3_setup();
-		sd_setup();
-		sd_load_config();
+		mp3_setup();
+
 		rfid_setup();
-		mpu_setup();
 		led_setup();
 		lcd_setup();
+		// delay(500);
+		sd_setup();
+		sd_load_config();
+		mpu_setup();
+
 
 		time = config[0];
 		del_time = config[1];
-		access_time_config = config[2];
+		ignore_time.setInterval(config[2]);
 		add_time = config[3];
-		mpu_first_treshold = config[7];
-		mpu_second_treshold = config[8];
-
+		// mpu_first_treshold = config[10];
+		// mpu_second_treshold = config[11];
+		mpu_first_treshold = 16000;
+		mpu_second_treshold = 20000;
+		// access_time_config = config[12];
+		access_time_config = config[12];
 		five_second.setMode(0);
+		ignore_time.setMode(0);
 }
 
 void post_init(){
-		// mp3_play(1);
+		mp3_play(1);
 		led_enable();
 		lcd_enable();
-		lcd_print(1, "  Бомбу активовано  ");
-		lcd_print(2, "  Вiдлiк почато  ");
+		five_second.reset();
+		lcd_print(1, "  БOMБУ AKTИBOBAHO");
+		lcd_print(2, "   BIДЛIK ПOЧATO");
 }
 
 void lcd_time_print(){
-	char lcd_time[5];
-	int minuts = access_time / (1000 * 60);
-	int seconds = access_time % (1000 * 60);
-	lcd_time[0] = minuts /10;
-	lcd_time[1] = minuts %10;
-	lcd_time[2] = ':';
-	lcd_time[3] = seconds /10;
-	lcd_time[4] = seconds %10;
-
-	lcd_print(3, lcd_time);
+		// access_time = 60000;
+		if (access_time >= 0) {
+				char lcd_time[] = "       00:00";
+				int minuts = access_time / 60000;
+				int seconds = access_time % 60000 / 1000;
+				lcd_time[7] = (char)((minuts / 10) + 48);
+				lcd_time[8] = (char)((minuts % 10) + 48);
+				// lcd_time[9] = ':';
+				lcd_time[10] = (char)((seconds / 10) + 48);
+				lcd_time[11] = (char)((seconds % 10) + 48);
+				lcd_print(0, lcd_time);
+		}
 }
 
 void stage_a(int iteration) { // keyboard
-		while(time < 0) {
+		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						led_strip_color(0,255,0);
-						lcd_print(1, keypad_presed_keys);
-						char line[strlen("Введiть код #") + 2] = "Введiть код #";
-						line[-1] = (char)(iteration + 48);
-						lcd_print(2, line);
-						if (access_time > 0) {
-							lcd_time_print();
+						if (alarm_flag) {
+								lcd_clear();
+								alarm_flag = false;
+								led_strip_color(0,255,0);
+								char line[] = "Введiть код # ";
+								line[sizeof(line) - 2] = (char)(iteration + 49);
+								lcd_print(1, line);
+								if (iteration > 0) {
+										char ch[3];
+										itoa(config[7 + iteration],ch,10);
+										lcd_print(3, ch);
+								}
 						}
-						if (iteration > 0) {
-								lcd_print(4, config[7 + iteration]);
-						}
+						lcd_time_print();
+						lcd_print(2, keypad_presed_keys);
+
+
 
 						if (keypad_presed_keys_count == 3) {
 								int num = 0;
@@ -581,9 +648,12 @@ void stage_a(int iteration) { // keyboard
 										num = (num * 10) + (int)keypad_presed_keys[i] - 48;
 								}
 								if(num == config[iteration + 4]) {
+										alarm_flag = true;
 										return;
 								}
 						}
+				}else{
+						//
 				}
 		}
 		finish_b();
@@ -592,26 +662,31 @@ void stage_a(int iteration) { // keyboard
 
 
 void stage_b(int iteration) { // artefacts
-		while(time < 0) {
+		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						led_strip_color(0,255,0);
-						char line[strlen("Вставте артефакт #") + 2] = "Вставте артефакт #";
-						line[-1] = (char)(iteration + 48);
-						lcd_print(2, line);
-						if (access_time > 0) {
+						if (alarm_flag) {
+								lcd_clear();
+								alarm_flag = false;
+								led_strip_color(0,255,0);
+								char line[] = "Вставте артефакт # ";
+								line[sizeof(line) - 2] = (char)(iteration + 49);
+								lcd_print(2, line);
+								if (iteration > 0) {
+										char ch[3];
+										itoa(config[7 + iteration],ch,10);
+										lcd_print(3, ch);
+								}
 								lcd_time_print();
-						}
-						if (iteration > 0) {
-								lcd_print(4, config[7 + iteration]);
+
 						}
 						if (digitalRead(artefact_list_pins[iteration])) { /*stage finished*/
 								Adafruit_NeoPixel pixel(NUMPIXELS, artefact_led_pins[iteration], NEO_GRB + NEO_KHZ800);
 								pixel.begin();
 								pixel.clear();
-								pixel.setPixelColor(0, pixel.Color(1, 245, 100));
+								pixel.setPixelColor(0, pixel.Color(0, 255, 0));
 								pixel.show();
-
+								alarm_flag = true;
 								return;
 						}
 				}
@@ -620,22 +695,26 @@ void stage_b(int iteration) { // artefacts
 }
 
 void stage_c(int iteration) { // jumpers
-		while(time < 0) {
+		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						lcd_clear();
-						led_strip_color(0,255,0);
-						char line[strlen("Вставте перемичку #") + 2] = "Вставте перемичку #";
-						line[-1] = (char)(iteration + 48);
-						lcd_print(2, line);
-						if (access_time > 0) {
-							lcd_time_print();
-						}
-						if (iteration > 0) {
-								lcd_print(4, config[7 + iteration]);
-						}
+						if (alarm_flag) {
+								lcd_clear();
+								alarm_flag = false;
+								led_strip_color(0,255,0);
+								char line[] = "Вставте перемичку # ";
+								line[sizeof(line) - 2] = (char)(iteration + 49);
+								lcd_print(2, line);
 
+								if (iteration > 0) {
+										char ch[3];
+										itoa(config[7 + iteration],ch,10);
+										lcd_print(3, ch);
+								}
+								lcd_time_print();
+						}
 						if (digitalRead(jumper_pins[iteration])) { /*stage finished*/
+								alarm_flag = true;
 								return;
 						}
 				}
@@ -644,20 +723,14 @@ void stage_c(int iteration) { // jumpers
 }
 
 
-bool desactivation_key(){
-		if (digitalRead(disactivation_key_pin)) {
-				return true;
-		}
-		return false;
-}
 
 void final_block(){
 		mp3_play(9);
 		ten_second.reset();
 		lcd_clear();
 		lcd_print(2,"ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦII");
-		lcd_print(3,"Та натисніть секретні кнопки");
-		while ((keys_check() != sizeof(end_keys_pins)) || !desactivation_key()) {
+		// lcd_print(3,"Та натисніть секретні кнопки");
+		while ((keys_check() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
 				update();
 
 				if (ten_second.isReady()) {
@@ -666,6 +739,7 @@ void final_block(){
 
 				if (time <= 0) {finish_b();} // finish b if timeout
 		}
+
 }
 
 void finish_a(){
@@ -681,13 +755,27 @@ void finish_a(){
 void finish_b(){
 		while(true) {delay(1000);} // wait for reset
 }
-
+// void setup() {
+//      pre_init();
+//      delay(2000);
+//      post_init();
+// }
+//
+// void loop() {
+//      update();
+// }
 void setup() {
 		pre_init();
-		delay(2000);
+		while (!digitalRead(start_button_pin)) {} // wait to push start button
 		post_init();
+		for (int i = 0; i < 3; i++) {
+				stage_a(i);
+				stage_b(i);
+				stage_c(i);
+		}
+		final_block();
+		finish_a();
 }
 
 void loop() {
-		update();
 }

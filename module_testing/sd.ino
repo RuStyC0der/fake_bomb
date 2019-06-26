@@ -2,12 +2,16 @@
 
 File file;
 
+
 #define CONFIG_SIZE 12
+#define SD_POWER_PIN A7
 long config[CONFIG_SIZE] = {0};
 
 void sd_setup()
 {
-        Serial.begin(9600);
+        pinMode(SD_POWER_PIN, OUTPUT);
+        sd_power(1);
+        pinMode(6, OUTPUT);
         Serial.print("Initializing SD card...");
 // на Ethernet шилде CS соответствует 4 пину. По умолчанию он установлен в режим output
 // обратите внимание, что если он не используется в качестве CS пина, SS пин на оборудовании
@@ -23,7 +27,6 @@ void sd_setup()
 
 char symbol;
 bool sd_load_config(){      // thos func return 1 if config loaded succfully, and 0 if not
-  pinMode(6, OUTPUT);
 
         file = SD.open("config.cfg");
         if (!file) {
@@ -50,7 +53,25 @@ bool sd_load_config(){      // thos func return 1 if config loaded succfully, an
                   }
                 }
         }
-        pinMode(6, INPUT);
+        sd_power(0);
         return 1;
+
+}
+void sd_power(bool flag){
+  if (flag){
+    digitalWrite(SD_POWER_PIN, HIGH);
+  }else{
+    digitalWrite(SD_POWER_PIN, LOW);
+  }
+}
+void setup() {
+  Serial.begin(9600);
+  sd_setup();
+  sd_load_config();
+}
+void loop() {
+for (int i =0 ; i < CONFIG_SIZE; i++){
+  Serial.println(config[i]);
+}
 
 }
