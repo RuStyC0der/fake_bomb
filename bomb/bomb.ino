@@ -18,6 +18,11 @@ int artefact_list_pins[3] = {30,32,34};
 int artefact_led_pins[3] = {36,38,40};
 
 ////////////////////////////////////////////////////////////////////////////////
+//steam
+int steam_pin = A12;
+bool steam_flag = false;
+////////////////////////////////////////////////////////////////////////////////
+
 // config array structure
 // 0: work time
 // 1: del time
@@ -246,7 +251,7 @@ void mp3_setup()
 				while (true);
 		}
 		Serial.println(F("DFPlayer Mini online."));
-		myDFPlayer.volume(20); //Set volume value. From 0 to 30
+		myDFPlayer.volume(0); //Set volume value. From 0 to 30
 		//myDFPlayer.play(4);
 }
 
@@ -522,6 +527,8 @@ void update(){
 								time -= 300000;
 								break;
 						case 3:
+								steam_flag = !steam_flag;
+								digitalWrite(steam_pin, !steam_flag);
 								// move for 3 chanel triger
 								break;
 						case 4:
@@ -572,6 +579,8 @@ void update(){
 
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
+		pinMode(steam_pin, OUTPUT);
+		digitalWrite(steam_pin, !steam_flag);
 		Serial.begin(9600);
 		mp3_setup();
 		led_strip_setup();
