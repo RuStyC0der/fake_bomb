@@ -1,8 +1,18 @@
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#define ONE_WIRE_BUS 6
+
+OneWire oneWire(ONE_WIRE_BUS);
+
+DallasTemperature sensors(&oneWire);
+DeviceAddress Thermometer1 = { 0x28, 0x61, 0x64, 0x11, 0x8C, 0x65, 0xB4, 0x7C };  // адрес датчика DS18B20 280054B604000092
+
 // float my_vcc_const = 0.976;
 float my_vcc_const = 1.08;
-float min_bat_treshold = 3; 
+float min_bat_treshold = 3;
 float min_bat_treshold_or = 3;
 float drawdown_factor = 0.88;
+float temp_treshold = 60;
 
 
 
@@ -12,6 +22,8 @@ int bat_pin = A5;
 bool status = false;
 
 void setup(){
+	sensors.begin();
+	sensors.setResolution(Thermometer1, 10);
 		pinMode(mosfet_pin, OUTPUT);
 		pinMode(2, OUTPUT);
 		digitalWrite(2, LOW);
@@ -20,7 +32,8 @@ void setup(){
 }
 
 void loop() {
-		if (digitalRead(request_pin) and (volts() > min_bat_treshold)) {
+	sensors.requestTemperatures();
+		if (digitalRead(request_pin) and (volts() > min_bat_treshold) and (sensors.getTempC(Thermometer1) < temp_treshold)) {
 		   if (!status) {
 		       Serial.println("on");
 		       digitalWrite(mosfet_pin, HIGH);
