@@ -440,7 +440,9 @@ bool keypad_check(){
 // logic
 #include "GyverTimer.h"
 
-GTimer_ms step_time(40); // try change this to 20 or 50
+int clock_step = 40;
+
+GTimer_ms step_time(clock_step); // try change this to 20 or 50
 GTimer_ms second(1000);
 GTimer_ms ten_second(10000);
 
@@ -453,6 +455,8 @@ GTimer_ms ignore_time(10000);
 long access_time_config;
 long del_time;
 long add_time;
+long time_move_step = 300000;
+
 
 long time;
 long access_time = 0;
@@ -490,7 +494,7 @@ int keys_check(){
 }
 
 void time_added(){
-		time += 300000;
+		time += time_move_step;
 		// bomb reaction
 }
 
@@ -506,8 +510,8 @@ void update(){
 		if (step_time.isReady()) {
 				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
-				time -= 40;
-				access_time -= 40;
+				time -= clock_step;
+				access_time -= clock_step;
 				if (second.isReady()) {
 						// Serial.println(access_time);
 						// Serial.println(add_time);
@@ -518,10 +522,10 @@ void update(){
 						case 0:
 								break;
 						case 1:
-								time += 300000;
+								time += time_move_step;
 								break;
 						case 2:
-								time -= 300000;
+								time -= time_move_step;
 								break;
 						case 3:
 								// move for 3 chanel triger
@@ -577,8 +581,6 @@ void update(){
 
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
-		pinMode(steam_pin, OUTPUT);
-		digitalWrite(steam_pin, true);
 		Serial.begin(9600);
 		mp3_setup();
 		led_strip_setup();
