@@ -15,12 +15,9 @@ int jumper_pins[3] = {A8,A9,A10};
 ////////////////////////////////////////////////////////////////////////////////
 //aertefacts pins
 int artefact_list_pins[3] = {30,32,34};
-int artefact_led_pins[3] = {36,38,40};
+// int artefact_led_pins[3] = {36,38,40};
 
-////////////////////////////////////////////////////////////////////////////////
-//steam
-int steam_pin = A12;
-bool steam_flag = false;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // config array structure
@@ -251,7 +248,7 @@ void mp3_setup()
 				while (true);
 		}
 		Serial.println(F("DFPlayer Mini online."));
-		myDFPlayer.volume(0); //Set volume value. From 0 to 30
+		myDFPlayer.volume(30);     //Set volume value. From 0 to 30
 		//myDFPlayer.play(4);
 }
 
@@ -281,7 +278,7 @@ void mpu_setup(/* arguments */) {
 	#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
 		Fastwire::setup(400, true);
 	#endif
-		accel.initialize(); // первичная настройка датчика
+		accel.initialize();     // первичная настройка датчика
 		Serial.println(accel.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 }
 
@@ -297,7 +294,7 @@ float _mpu_filter(float val) {
 		P = (1 - G) * Pc;
 		Xp = Xe;
 		Zp = Xp;
-		Xe = G * (val - Zp) + Xp; // "фильтрованное" значение
+		Xe = G * (val - Zp) + Xp;     // "фильтрованное" значение
 		return (Xe);
 }
 
@@ -307,7 +304,7 @@ int mpu_check(/* arguments */) {
 		unsigned int sum;
 
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
-		sum = abs((constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
+		sum = abs(_mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
 		// Serial.println(sum);
 
 		if (sum > mpu_second_treshold) {
@@ -332,12 +329,12 @@ int8_t ListDisp[6] = {0,0,0,0,0,0};
 
 void led_setup() {
 		tm1637_6D.init();
-		tm1637_6D.set(BRIGHTEST);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+		tm1637_6D.set(BRIGHTEST);    //BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 
 }
 
 void led_enable(/* arguments */) {
-		tm1637_6D.set(BRIGHTEST);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+		tm1637_6D.set(BRIGHTEST);    //BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 		tm1637_6D.display(ListDisp,ListDispPoint);
 }
 
@@ -460,12 +457,12 @@ long add_time;
 long time;
 long access_time = 0;
 
-bool alarm_flag = true;
+bool update_flag = true;
 
 
 void mpu_alarm(){
 		lcd_clear();
-		alarm_flag = true;
+		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
 		led_strip_color(200, 0, 0);
@@ -474,7 +471,7 @@ void mpu_alarm(){
 
 void alarm(){
 		lcd_clear();
-		alarm_flag = true;
+		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
 		led_strip_color(255, 0, 0);
@@ -527,8 +524,6 @@ void update(){
 								time -= 300000;
 								break;
 						case 3:
-								steam_flag = !steam_flag;
-								digitalWrite(steam_pin, !steam_flag);
 								// move for 3 chanel triger
 								break;
 						case 4:
@@ -551,6 +546,7 @@ void update(){
 				}
 
 				if (access_time < 0) {
+
 						if (ignore_time.isReady()) {
 								switch (mpu_check()) {
 								case 0:
@@ -567,6 +563,8 @@ void update(){
 								if (keypad_check()) {
 										alarm();
 								}
+						}else{
+								mpu_check();
 						}
 				}else{
 						keypad_get_key();
@@ -580,7 +578,7 @@ void update(){
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
 		pinMode(steam_pin, OUTPUT);
-		digitalWrite(steam_pin, !steam_flag);
+		digitalWrite(steam_pin, true);
 		Serial.begin(9600);
 		mp3_setup();
 		led_strip_setup();
@@ -635,7 +633,7 @@ void stage_a(int iteration) { // keyboard
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						if (alarm_flag) {
+						if (update_flag) {
 								lcd_clear();
 								led_strip_color(0,255,0);
 								char line[] = "Введiть код # ";
@@ -646,7 +644,7 @@ void stage_a(int iteration) { // keyboard
 										itoa(config[7 + iteration],ch,10);
 										lcd_print(3, ch);
 								}
-								alarm_flag = false;
+								update_flag = false;
 						}
 						lcd_time_print();
 						lcd_print(2, keypad_presed_keys);
@@ -659,7 +657,7 @@ void stage_a(int iteration) { // keyboard
 										num = (num * 10) + (int)keypad_presed_keys[i] - 48;
 								}
 								if(num == config[iteration + 4]) {
-										alarm_flag = true;
+										update_flag = true;
 										return;
 								}
 						}
@@ -676,9 +674,9 @@ void stage_b(int iteration) { // artefacts
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						if (alarm_flag) {
+						if (update_flag) {
 								lcd_clear();
-								alarm_flag = false;
+								update_flag = false;
 								led_strip_color(0,255,0);
 								char line[] = "Вставте артефакт # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
@@ -692,13 +690,8 @@ void stage_b(int iteration) { // artefacts
 						}
 						lcd_time_print();
 
-						if (digitalRead(artefact_list_pins[iteration])) { /*stage finished*/
-								Adafruit_NeoPixel pixel(NUMPIXELS, artefact_led_pins[iteration], NEO_GRB + NEO_KHZ800);
-								pixel.begin();
-								pixel.clear();
-								pixel.setPixelColor(0, pixel.Color(0, 255, 0));
-								pixel.show();
-								alarm_flag = true;
+						if (digitalRead(artefact_list_pins[iteration])) {             /*stage finished*/
+								update_flag = true;
 								return;
 						}
 				}
@@ -710,9 +703,9 @@ void stage_c(int iteration) { // jumpers
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						if (alarm_flag) {
+						if (update_flag) {
 								lcd_clear();
-								alarm_flag = false;
+								update_flag = false;
 								led_strip_color(0,255,0);
 								char line[] = "Вставте перемичку # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
@@ -725,8 +718,8 @@ void stage_c(int iteration) { // jumpers
 								}
 						}
 						lcd_time_print();
-						if (digitalRead(jumper_pins[iteration])) { /*stage finished*/
-								alarm_flag = true;
+						if (digitalRead(jumper_pins[iteration])) {             /*stage finished*/
+								update_flag = true;
 								return;
 						}
 				}
@@ -749,7 +742,7 @@ void final_block(){
 						mp3_play(9);
 				}
 
-				if (time <= 0) {finish_b();} // finish b if timeout
+				if (time <= 0) {finish_b();}         // finish b if timeout
 		}
 
 }
@@ -761,16 +754,16 @@ void finish_a(){
 				delay(20);
 				pixels.show();
 		}
-		while(true) {delay(1000);} // wait for reset
+		while(true) {delay(1000);}     // wait for reset
 }
 
 void finish_b(){
-		while(true) {delay(1000);} // wait for reset
+		while(true) {delay(1000);}      // wait for reset
 }
 
 void setup() {
 		pre_init();
-		while (!digitalRead(start_button_pin)) {} // wait to push start button
+		while (!digitalRead(start_button_pin)) {}     // wait to push start button
 		post_init();
 		for (int i = 0; i < 3; i++) {
 				stage_a(i);
