@@ -4,9 +4,9 @@ int buzzer_pin = 8; //change me
 
 ////////////////////////////////////////////////////////////////////////////////
 //button`s
-byte start_button_pin = 12;
-int end_keys_pins[4] = {14,15,16,17}; // CHANGE ME BITCH!!!!!!!
-int disactivation_key_pin = 13;
+byte start_button_pin = 41;
+int end_keys_pins[4] = {A12, A13, A14, A15}; // CHANGE ME BITCH!!!!!!!
+int disactivation_key_pin = 45;
 
 ////////////////////////////////////////////////////////////////////////////////
 //jumper_pins
@@ -14,10 +14,12 @@ int jumper_pins[3] = {A8,A9,A10};
 
 ////////////////////////////////////////////////////////////////////////////////
 //aertefacts pins
-int artefact_list_pins[3] = {30,32,33};
-int artefact_led_pins[3] = {36,38,40};
+int artefact_list_pins[3] = {34,32,30};
+// int artefact_led_pins[3] = {36,38,40}; // UNUSED
+
 
 ////////////////////////////////////////////////////////////////////////////////
+
 // config array structure
 // 0: work time
 // 1: del time
@@ -246,7 +248,7 @@ void mp3_setup()
 				while (true);
 		}
 		Serial.println(F("DFPlayer Mini online."));
-		myDFPlayer.volume(20); //Set volume value. From 0 to 30
+		myDFPlayer.volume(20);     //Set volume value. From 0 to 30
 		//myDFPlayer.play(4);
 }
 
@@ -265,8 +267,8 @@ void mp3_play(int number) {
 // #define mila 123
 // extern int config[];
 
-int mpu_first_treshold = 2000; //change me
-int mpu_second_treshold = 4000; //change me
+int mpu_first_treshold; //change me
+int mpu_second_treshold; //change me
 
 MPU6050 accel;
 
@@ -276,13 +278,13 @@ void mpu_setup(/* arguments */) {
 	#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
 		Fastwire::setup(400, true);
 	#endif
-		accel.initialize(); // первичная настройка датчика
+		accel.initialize();     // первичная настройка датчика
 		Serial.println(accel.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 }
 
 // переменные для Калмана
 float varVolt = 78.9;   // среднее отклонение (ищем в excel)
-float varProcess = 0.05; // скорость реакции на изменение (подбирается вручную)
+float varProcess = 0.005; // скорость реакции на изменение (подбирается вручную)
 float Pc = 0.0, G = 0.0, P = 1.0, Xp = 0.0, Zp = 0.0, Xe = 0.0;
 
 // Функция фильтрации
@@ -292,7 +294,7 @@ float _mpu_filter(float val) {
 		P = (1 - G) * Pc;
 		Xp = Xe;
 		Zp = Xp;
-		Xe = G * (val - Zp) + Xp; // "фильтрованное" значение
+		Xe = G * (val - Zp) + Xp;     // "фильтрованное" значение
 		return (Xe);
 }
 
@@ -302,7 +304,7 @@ int mpu_check(/* arguments */) {
 		unsigned int sum;
 
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
-		sum = abs((constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
+		sum = abs(_mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
 		// Serial.println(sum);
 
 		if (sum > mpu_second_treshold) {
@@ -327,12 +329,12 @@ int8_t ListDisp[6] = {0,0,0,0,0,0};
 
 void led_setup() {
 		tm1637_6D.init();
-		tm1637_6D.set(BRIGHTEST);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+		tm1637_6D.set(BRIGHTEST);    //BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 
 }
 
 void led_enable(/* arguments */) {
-		tm1637_6D.set(BRIGHTEST);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+		tm1637_6D.set(BRIGHTEST);    //BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 		tm1637_6D.display(ListDisp,ListDispPoint);
 }
 
@@ -395,8 +397,11 @@ char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 		{'*','0','#'}
 };
 
-byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
-byte keypad_colPins[keypad_COLS] = {39, 41, 43};
+byte keypad_rowPins[keypad_ROWS] = {35, 33, 31, 37};
+// byte keypad_rowPins[keypad_ROWS] = {37, 35, 33, 31};
+// byte keypad_colPins[keypad_COLS] = {A2, A1, A0};
+byte keypad_colPins[keypad_COLS] = {A0, A1, A2};
+// byte keypad_colPins[keypad_COLS] = {39, 41, 43};
 char keypad_presed_keys[3] = "___";
 byte keypad_presed_keys_count = 0;
 
@@ -438,7 +443,9 @@ bool keypad_check(){
 // logic
 #include "GyverTimer.h"
 
-GTimer_ms step_time(40); // try change this to 20 or 50
+int clock_step = 40;
+
+GTimer_ms step_time(clock_step); // try change this to 20 or 50
 GTimer_ms second(1000);
 GTimer_ms ten_second(10000);
 
@@ -451,15 +458,18 @@ GTimer_ms ignore_time(10000);
 long access_time_config;
 long del_time;
 long add_time;
+long time_move_step = 300000;
+
 
 long time;
 long access_time = 0;
 
-bool alarm_flag = true;
+bool update_flag = true;
 
 
 void mpu_alarm(){
-		bool alarm_flag = true;
+		lcd_clear();
+		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
 		led_strip_color(200, 0, 0);
@@ -467,7 +477,12 @@ void mpu_alarm(){
 }
 
 void alarm(){
-		bool alarm_flag = true;
+		lcd_clear();
+		lcd_print(0,"SDFEERHNVYDRTYJDFHYT");
+		lcd_print(1,"##### WARNING! #####");
+		lcd_print(2,"## CRITICAL ERROR ##");
+		lcd_print(3,"ATHTKBYFEEVGYDTYDSY6");
+		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
 		led_strip_color(255, 0, 0);
@@ -486,7 +501,7 @@ int keys_check(){
 }
 
 void time_added(){
-		time += 300000;
+		time += time_move_step;
 		// bomb reaction
 }
 
@@ -502,8 +517,8 @@ void update(){
 		if (step_time.isReady()) {
 				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
-				time -= 40;
-				access_time -= 40;
+				time -= clock_step;
+				access_time -= clock_step;
 				if (second.isReady()) {
 						// Serial.println(access_time);
 						// Serial.println(add_time);
@@ -514,10 +529,10 @@ void update(){
 						case 0:
 								break;
 						case 1:
-								time += 300000;
+								time += time_move_step;
 								break;
 						case 2:
-								time -= 300000;
+								time -= time_move_step;
 								break;
 						case 3:
 								// move for 3 chanel triger
@@ -542,6 +557,7 @@ void update(){
 				}
 
 				if (access_time < 0) {
+
 						if (ignore_time.isReady()) {
 								switch (mpu_check()) {
 								case 0:
@@ -558,6 +574,8 @@ void update(){
 								if (keypad_check()) {
 										alarm();
 								}
+						}else{
+								mpu_check();
 						}
 				}else{
 						keypad_get_key();
@@ -571,14 +589,21 @@ void update(){
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
 		Serial.begin(9600);
+		Serial.println("1");
 		mp3_setup();
-
+		Serial.println("1");
+		led_strip_setup();
+		Serial.println("1");
 		rfid_setup();
+		Serial.println("1");
 		led_setup();
+		Serial.println("1");
 		lcd_setup();
 		// delay(500);
 		sd_setup();
+		Serial.println("1");
 		sd_load_config();
+		Serial.println("1");
 		mpu_setup();
 
 
@@ -588,8 +613,8 @@ void pre_init(){
 		add_time = config[3];
 		// mpu_first_treshold = config[10];
 		// mpu_second_treshold = config[11];
-		mpu_first_treshold = 16000;
-		mpu_second_treshold = 20000;
+		mpu_first_treshold = 500;
+		mpu_second_treshold = 800;
 		// access_time_config = config[12];
 		access_time_config = config[12];
 		five_second.setMode(0);
@@ -624,9 +649,8 @@ void stage_a(int iteration) { // keyboard
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						if (alarm_flag) {
+						if (update_flag) {
 								lcd_clear();
-								alarm_flag = false;
 								led_strip_color(0,255,0);
 								char line[] = "Введiть код # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
@@ -636,6 +660,7 @@ void stage_a(int iteration) { // keyboard
 										itoa(config[7 + iteration],ch,10);
 										lcd_print(3, ch);
 								}
+								update_flag = false;
 						}
 						lcd_time_print();
 						lcd_print(2, keypad_presed_keys);
@@ -648,7 +673,7 @@ void stage_a(int iteration) { // keyboard
 										num = (num * 10) + (int)keypad_presed_keys[i] - 48;
 								}
 								if(num == config[iteration + 4]) {
-										alarm_flag = true;
+										update_flag = true;
 										return;
 								}
 						}
@@ -665,9 +690,9 @@ void stage_b(int iteration) { // artefacts
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						if (alarm_flag) {
+						if (update_flag) {
 								lcd_clear();
-								alarm_flag = false;
+								update_flag = false;
 								led_strip_color(0,255,0);
 								char line[] = "Вставте артефакт # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
@@ -677,16 +702,12 @@ void stage_b(int iteration) { // artefacts
 										itoa(config[7 + iteration],ch,10);
 										lcd_print(3, ch);
 								}
-								lcd_time_print();
 
 						}
-						if (digitalRead(artefact_list_pins[iteration])) { /*stage finished*/
-								Adafruit_NeoPixel pixel(NUMPIXELS, artefact_led_pins[iteration], NEO_GRB + NEO_KHZ800);
-								pixel.begin();
-								pixel.clear();
-								pixel.setPixelColor(0, pixel.Color(0, 255, 0));
-								pixel.show();
-								alarm_flag = true;
+						lcd_time_print();
+
+						if (digitalRead(artefact_list_pins[iteration])) {             /*stage finished*/
+								update_flag = true;
 								return;
 						}
 				}
@@ -698,9 +719,9 @@ void stage_c(int iteration) { // jumpers
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
-						if (alarm_flag) {
+						if (update_flag) {
 								lcd_clear();
-								alarm_flag = false;
+								update_flag = false;
 								led_strip_color(0,255,0);
 								char line[] = "Вставте перемичку # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
@@ -711,10 +732,10 @@ void stage_c(int iteration) { // jumpers
 										itoa(config[7 + iteration],ch,10);
 										lcd_print(3, ch);
 								}
-								lcd_time_print();
 						}
-						if (digitalRead(jumper_pins[iteration])) { /*stage finished*/
-								alarm_flag = true;
+						lcd_time_print();
+						if (digitalRead(jumper_pins[iteration])) {             /*stage finished*/
+								update_flag = true;
 								return;
 						}
 				}
@@ -728,7 +749,8 @@ void final_block(){
 		mp3_play(9);
 		ten_second.reset();
 		lcd_clear();
-		lcd_print(2,"ВСТАВТЕ КЛЮЧ ДЕЗАКТИВАЦII");
+		lcd_print(1,"     ВСТАВТЕ КЛЮЧ");
+		lcd_print(2,"     ДЕ3АКТИВАЦII");
 		// lcd_print(3,"Та натисніть секретні кнопки");
 		while ((keys_check() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
 				update();
@@ -737,40 +759,40 @@ void final_block(){
 						mp3_play(9);
 				}
 
-				if (time <= 0) {finish_b();} // finish b if timeout
+				if (time <= 0) {finish_b();}         // finish b if timeout
 		}
 
 }
 
 void finish_a(){
+		lcd_print(0,"********************");
+		lcd_print(1,"******C9H13NO3******");
+		lcd_print(2,"********************");
+		lcd_print(3,"ATHTKBYFEEVGYDTYDSY6");
+
 		mp3_play(2);
 		for (int i = 255; i >= 0; i--) {
 				pixels.setBrightness(i);
 				delay(20);
 				pixels.show();
 		}
-		while(true) {delay(1000);} // wait for reset
+		while(true) {delay(1000);}     // wait for reset
 }
 
 void finish_b(){
-		while(true) {delay(1000);} // wait for reset
+		while(true) {delay(1000);}      // wait for reset
 }
-// void setup() {
-//      pre_init();
-//      delay(2000);
-//      post_init();
-// }
-//
-// void loop() {
-//      update();
-// }
+
 void setup() {
 		pre_init();
-		while (!digitalRead(start_button_pin)) {} // wait to push start button
+		while (!digitalRead(start_button_pin)) {}     // wait to push start button
 		post_init();
 		for (int i = 0; i < 3; i++) {
+				mp3_play(conifg_num + i + 1);
 				stage_a(i);
+				mp3_play(conifg_num + i + 2);
 				stage_b(i);
+				mp3_play(conifg_num + i + 3);
 				stage_c(i);
 		}
 		final_block();
@@ -778,4 +800,25 @@ void setup() {
 }
 
 void loop() {
+}
+
+
+scopes = {
+    'global': {
+        'vars': set()
+    },
+
+    'some_inner_scope': {
+        'parent': 'global'
+        'vars': set('hello')
+    },
+
+
+    'some_very_inner_scope': {
+        'parent': 'some_inner_scope'
+        'vars': set()
+    },
+
+
+    // .....
 }

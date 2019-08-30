@@ -4,9 +4,9 @@ int buzzer_pin = 8; //change me
 
 ////////////////////////////////////////////////////////////////////////////////
 //button`s
-byte start_button_pin = 12;
-int end_keys_pins[4] = {14,15,16,17}; // CHANGE ME BITCH!!!!!!!
-int disactivation_key_pin = 13;
+byte start_button_pin = 41;
+int end_keys_pins[4] = {A12, A13, A14, A15}; // CHANGE ME BITCH!!!!!!!
+int disactivation_key_pin = 45;
 
 ////////////////////////////////////////////////////////////////////////////////
 //jumper_pins
@@ -14,8 +14,8 @@ int jumper_pins[3] = {A8,A9,A10};
 
 ////////////////////////////////////////////////////////////////////////////////
 //aertefacts pins
-int artefact_list_pins[3] = {30,32,34};
-// int artefact_led_pins[3] = {36,38,40};
+int artefact_list_pins[3] = {34,32,30};
+// int artefact_led_pins[3] = {36,38,40}; // UNUSED
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -248,7 +248,7 @@ void mp3_setup()
 				while (true);
 		}
 		Serial.println(F("DFPlayer Mini online."));
-		myDFPlayer.volume(30);     //Set volume value. From 0 to 30
+		myDFPlayer.volume(20);     //Set volume value. From 0 to 30
 		//myDFPlayer.play(4);
 }
 
@@ -267,8 +267,8 @@ void mp3_play(int number) {
 // #define mila 123
 // extern int config[];
 
-int mpu_first_treshold = 2000; //change me
-int mpu_second_treshold = 4000; //change me
+int mpu_first_treshold; //change me
+int mpu_second_treshold; //change me
 
 MPU6050 accel;
 
@@ -284,7 +284,7 @@ void mpu_setup(/* arguments */) {
 
 // переменные для Калмана
 float varVolt = 78.9;   // среднее отклонение (ищем в excel)
-float varProcess = 0.05; // скорость реакции на изменение (подбирается вручную)
+float varProcess = 0.005; // скорость реакции на изменение (подбирается вручную)
 float Pc = 0.0, G = 0.0, P = 1.0, Xp = 0.0, Zp = 0.0, Xe = 0.0;
 
 // Функция фильтрации
@@ -397,8 +397,11 @@ char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 		{'*','0','#'}
 };
 
-byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
-byte keypad_colPins[keypad_COLS] = {39, 41, 43};
+byte keypad_rowPins[keypad_ROWS] = {35, 33, 31, 37};
+// byte keypad_rowPins[keypad_ROWS] = {37, 35, 33, 31};
+// byte keypad_colPins[keypad_COLS] = {A2, A1, A0};
+byte keypad_colPins[keypad_COLS] = {A0, A1, A2};
+// byte keypad_colPins[keypad_COLS] = {39, 41, 43};
 char keypad_presed_keys[3] = "___";
 byte keypad_presed_keys_count = 0;
 
@@ -475,6 +478,10 @@ void mpu_alarm(){
 
 void alarm(){
 		lcd_clear();
+		lcd_print(0,"SDFEERHNVYDRTYJDFHYT");
+		lcd_print(1,"##### WARNING! #####");
+		lcd_print(2,"## CRITICAL ERROR ##");
+		lcd_print(3,"ATHTKBYFEEVGYDTYDSY6");
 		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
@@ -582,14 +589,21 @@ void update(){
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
 		Serial.begin(9600);
+		Serial.println("1");
 		mp3_setup();
+		Serial.println("1");
 		led_strip_setup();
+		Serial.println("1");
 		rfid_setup();
+		Serial.println("1");
 		led_setup();
+		Serial.println("1");
 		lcd_setup();
 		// delay(500);
 		sd_setup();
+		Serial.println("1");
 		sd_load_config();
+		Serial.println("1");
 		mpu_setup();
 
 
@@ -599,8 +613,8 @@ void pre_init(){
 		add_time = config[3];
 		// mpu_first_treshold = config[10];
 		// mpu_second_treshold = config[11];
-		mpu_first_treshold = 16000;
-		mpu_second_treshold = 20000;
+		mpu_first_treshold = 500;
+		mpu_second_treshold = 800;
 		// access_time_config = config[12];
 		access_time_config = config[12];
 		five_second.setMode(0);
@@ -632,6 +646,7 @@ void lcd_time_print(){
 }
 
 void stage_a(int iteration) { // keyboard
+		mp3_play(conifg_num + i + 1);
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
@@ -673,6 +688,7 @@ void stage_a(int iteration) { // keyboard
 
 
 void stage_b(int iteration) { // artefacts
+		mp3_play(conifg_num + i + 2);
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
@@ -702,6 +718,7 @@ void stage_b(int iteration) { // artefacts
 }
 
 void stage_c(int iteration) { // jumpers
+		mp3_play(conifg_num + i + 3);
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
@@ -735,7 +752,8 @@ void final_block(){
 		mp3_play(9);
 		ten_second.reset();
 		lcd_clear();
-		lcd_print(2,"ВСТАВТЕ КЛЮЧ ДЕ3АКТИВАЦII");
+		lcd_print(1,"     ВСТАВТЕ КЛЮЧ");
+		lcd_print(2,"     ДЕ3АКТИВАЦII");
 		// lcd_print(3,"Та натисніть секретні кнопки");
 		while ((keys_check() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
 				update();
@@ -750,6 +768,11 @@ void final_block(){
 }
 
 void finish_a(){
+		lcd_print(0,"********************");
+		lcd_print(1,"******C9H13NO3******");
+		lcd_print(2,"********************");
+		lcd_print(3,"ATHTKBYFEEVGYDTYDSY6");
+
 		mp3_play(2);
 		for (int i = 255; i >= 0; i--) {
 				pixels.setBrightness(i);

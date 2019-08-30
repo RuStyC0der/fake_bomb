@@ -21,5 +21,5 @@ print(count)
 print(len(sof))
 if len(sof )> 8:
     print("maybe this is bad idea")
-print("\"" + " " * (((20 - len(line))//2)+count) + line + "\"")
+print("\"" + "*" * (((20 - len(line))//2)+count) + line + "\"")
 print("\"" + " " * (((20 - len(line))//2)) + line + "\"")

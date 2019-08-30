@@ -1,13 +1,14 @@
+////////////////////////////////////////////////////////////////////////////////
 //rfid
 #include <MFRC522.h>
 #include <SPI.h>
 #define RFID_RST_PIN 5
-byte rfid_keys_array[4][4] = {{91,21,228,13},{48,110,185,164},{38,136,22,18},{139,218,190,13}};
-byte rfid_access_flag_key[4] = {1,1,1,1};
+byte rfid_keys_array[4][4] = {{78,189,226,33},{126,35,94,33},{38,136,22,18},{18,164,106,29}};
+byte rfid_access_flag_key[4] = {48,110,185,164};
 byte rfid_current_key[4];
 
 MFRC522 rfid(53, RFID_RST_PIN);
-MFRC522::MIFARE_Key key;hy
+MFRC522::MIFARE_Key key;
 
 void rfid_setup() {
 		SPI.begin();
@@ -35,7 +36,7 @@ int rfid_authentificate() {
 		}
 		for (byte i = 0; i < 4; i++) {
 				rfid_current_key[i] = rfid.uid.uidByte[i];
-				// Serial.print(current_key[i]);
+				// Serial.print(rfid_current_key[i]);
 				// Serial.print(",");
 		}
 		// Serial.println();
@@ -64,7 +65,8 @@ int rfid_authentificate() {
 						}
 				}
 				if (flag == true) {
-						return 0;
+						memset(rfid_keys_array[i], 0, sizeof(rfid_keys_array[i]));
+						return 1;
 				}
 		}
 		// delay(1000);

@@ -1,6 +1,11 @@
 
+#include "new"
+
+int buf[10];
+
 void setup() {
   Serial.begin(9600);
+  char *p = new (buf) char[4];
 }
 
 void loop() {

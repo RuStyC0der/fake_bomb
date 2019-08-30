@@ -1,16 +1,17 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#define ONE_WIRE_BUS 6
+#define ONE_WIRE_BUS 8
 
 OneWire oneWire(ONE_WIRE_BUS);
 
+
 DallasTemperature sensors(&oneWire);
-DeviceAddress Thermometer1 = { 0x28, 0x61, 0x64, 0x11, 0x8C, 0x65, 0xB4, 0x7C };  // адрес датчика DS18B20 280054B604000092
+DeviceAddress Thermometer1 = {0x28, 0x61, 0x64, 0x11, 0x83, 0xC3, 0xF7, 0xC3};  // адрес датчика DS18B20 280054B604000092
 
 // float my_vcc_const = 0.976;
 float my_vcc_const = 1.08;
-float min_bat_treshold = 3;
-float min_bat_treshold_or = 3;
+float min_bat_treshold = 2.9;
+float min_bat_treshold_or = 2.9;
 float drawdown_factor = 0.88;
 float temp_treshold = 60;
 
@@ -20,40 +21,41 @@ int request_pin = 4;
 int mosfet_pin = 6;
 int bat_pin = A5;
 bool status = false;
+int relay_pin = 9;
+
+#include <GyverTimer.h>
+
+GTimer_ms work_time(4000);
+GTimer_ms wait_time(5000);
 
 void setup(){
-	sensors.begin();
-	sensors.setResolution(Thermometer1, 10);
+		sensors.begin();
+		sensors.setResolution(Thermometer1, 10);
 		pinMode(mosfet_pin, OUTPUT);
-		pinMode(2, OUTPUT);
-		digitalWrite(2, LOW);
+		pinMode(relay_pin, OUTPUT);
+		digitalWrite(relay_pin, LOW);
 		pinMode(request_pin, INPUT);
 		Serial.begin(9600);
 }
 
 void loop() {
-	sensors.requestTemperatures();
-		if (digitalRead(request_pin) and (volts() > min_bat_treshold) and (sensors.getTempC(Thermometer1) < temp_treshold)) {
-		   if (!status) {
-		       Serial.println("on");
-		       digitalWrite(mosfet_pin, HIGH);
-		       min_bat_treshold = min_bat_treshold * drawdown_factor;
-		       status = true;
-		   }
-		}else{
-		   if (status) {
-		       Serial.println("off");
-		       digitalWrite(mosfet_pin, LOW);
-		       min_bat_treshold = min_bat_treshold_or;
-		       status = false;
-		   }
-
+		sensors.requestTemperatures();
+		// Serial.print(digitalRead(request_pin));
+		// Serial.print((volts()));
+		// Serial.println((sensors.getTempC(Thermometer1) < temp_treshold));
+		delay(500);
+		if (digitalRead(request_pin) and (volts() > min_bat_treshold) and (sensors.getTempC(Thermometer1) < temp_treshold))
+		{
+			Serial.println("on");
+			digitalWrite(mosfet_pin, HIGH);
+			work_time.reset();
+			while (!work_time.isReady()) {delay(100);}
+			digitalWrite(mosfet_pin, LOW);
+			Serial.println("off");
+			wait_time.reset();
+			while (!wait_time.isReady()) {delay(100);}
 		}
-		// Serial.println(digitalRead(request_pin));
-		// Serial.println(readVcc());
-		// Serial.println(analogRead(bat_pin));
-		// Serial.println(volts());
-		// delay(500);
+
 }
 
 float readVcc() { //функция чтения внутреннего опорного напряжения, универсальная (для всех ардуин)

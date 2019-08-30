@@ -1,5 +1,7 @@
-#include <Keypad.h>
+
+////////////////////////////////////////////////////////////////////////////////
 //keypad
+#include <Keypad.h>
 const byte keypad_COLS = 3;
 const byte keypad_ROWS = 4;
 
@@ -11,13 +13,12 @@ char keypad_hexaKeys[keypad_ROWS][keypad_COLS] = {
 };
 
 byte keypad_rowPins[keypad_ROWS] = {31, 33, 35, 37};
-byte keypad_colPins[keypad_COLS] = {39, 41, 43};
-char keypad_presed_keys[3];
+byte keypad_colPins[keypad_COLS] = {A2, A1, A0};
 byte keypad_presed_keys_count = 0;
 
 Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
 
-void keypad_get_key() {
+void keypad_update_keys(char* keypad_presed_keys) {
 		if (keypad_presed_keys_count < 3) {
 				char key = customKeypad.getKey();
 				if(key) {
@@ -26,7 +27,7 @@ void keypad_get_key() {
 				}
 
 		}else{
-				memset(keypad_presed_keys, 95,3);
+				memset(keypad_presed_keys, '_',3);
 				keypad_presed_keys_count = 0;
 				char key = customKeypad.getKey();
 				if (key) {
@@ -37,11 +38,8 @@ void keypad_get_key() {
 
 }
 
-bool keypad_check(){
-	if (customKeypad.getKey()){
-		return true;
-	}else{
-		return false;
-	}
 
+
+bool keypad_check(){
+		return customKeypad.getKey();
 }
