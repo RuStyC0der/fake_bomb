@@ -68,7 +68,7 @@ void led_strip_color(int r, int g, int b) {
 		pixels.show();
 }
 
-led_strip_brightness(int i){
+void led_strip_brightness(int i){
 	pixels.setBrightness(i);
 	pixels.show();
 }
@@ -478,7 +478,7 @@ void mpu_alarm(){
 		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
-		led_strip_color(200, 0, 0);
+		// led_strip_color(200, 0, 0);
 		mp3_play(3);
 }
 
@@ -491,7 +491,7 @@ void alarm(){
 		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
-		led_strip_color(255, 0, 0);
+		// led_strip_color(255, 0, 0);
 		mp3_play(4);
 		time -= del_time;
 }
@@ -518,9 +518,27 @@ void access_granted(){
 		//bomb reaction
 }
 
+int min_br = 50, max_br = 255, step_br = 1;
+int current_br = min_br;
 
 void update(){
 		if (step_time.isReady()) {
+
+				if (five_second.isReady()){
+					led_strip_color(255,0,0);
+				}else{
+					led_strip_color(0,255,0);
+				}
+
+				if (current_br >= max_br && step_br == 1){
+					step_br = -1;
+				} else if (current_br <= min_br && step_br == -1){
+					step_br = 1;
+				}
+
+				led_strip_brightness(current_br);
+				current_br += step_br;
+
 				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
 				time -= clock_step;
@@ -532,7 +550,9 @@ void update(){
 						case 0:
 								break;
 						case 1:
+								if (time < 5940000){
 								time += time_move_step;
+								}
 								break;
 						case 2:
 								time -= time_move_step;
@@ -572,8 +592,6 @@ void update(){
 										alarm();
 										break;
 								}
-
-								// if (keypad_check() || keys_check()) {
 								if (keypad_check()) {
 										alarm();
 								}
@@ -649,7 +667,7 @@ void stage_a(int iteration) { // keyboard
 				if (five_second.isReady()) {
 						if (update_flag) {
 								lcd_clear();
-								led_strip_color(0,255,0);
+								// led_strip_color(0,255,0);
 								char line[] = "Введiть код # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
 								lcd_print(1, line);
@@ -692,7 +710,7 @@ void stage_b(int iteration) { // artefacts
 						if (update_flag) {
 								lcd_clear();
 								update_flag = false;
-								led_strip_color(0,255,0);
+								// led_strip_color(0,255,0);
 								char line[] = "Вставте артефакт # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
 								lcd_print(2, line);
@@ -722,7 +740,7 @@ void stage_c(int iteration) { // jumpers
 						if (update_flag) {
 								lcd_clear();
 								update_flag = false;
-								led_strip_color(0,255,0);
+								// led_strip_color(0,255,0);
 								char line[] = "Вставте перемичку # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
 								lcd_print(2, line);
