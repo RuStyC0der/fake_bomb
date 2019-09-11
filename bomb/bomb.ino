@@ -17,6 +17,8 @@ int jumper_pins[3] = {A8,A9,A10};
 int artefact_list_pins[3] = {34,32,30};
 // int artefact_led_pins[3] = {36,38,40}; // UNUSED
 
+// smoke_pin
+int smoke_pin = 13;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,7 +52,7 @@ int artefact_list_pins[3] = {34,32,30};
 // LED line
 #include <Adafruit_NeoPixel.h>
 #define PIN   7
-#define NUMPIXELS 3
+#define NUMPIXELS 14
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
@@ -66,6 +68,10 @@ void led_strip_color(int r, int g, int b) {
 		pixels.show();
 }
 
+led_strip_brightness(int i){
+	pixels.setBrightness(i);
+	pixels.show();
+}
 ////////////////////////////////////////////////////////////////////////////////
 //SD card
 #include <SD.h>
@@ -402,7 +408,7 @@ byte keypad_rowPins[keypad_ROWS] = {35, 33, 31, 37};
 // byte keypad_colPins[keypad_COLS] = {A2, A1, A0};
 byte keypad_colPins[keypad_COLS] = {A0, A1, A2};
 // byte keypad_colPins[keypad_COLS] = {39, 41, 43};
-char keypad_presed_keys[3] = "___";
+char keypad_presed_keys[3] = {'_', '_', '_'};
 byte keypad_presed_keys_count = 0;
 
 Keypad customKeypad = Keypad( makeKeymap(keypad_hexaKeys), keypad_rowPins, keypad_colPins, keypad_ROWS, keypad_COLS);
@@ -520,9 +526,6 @@ void update(){
 				time -= clock_step;
 				access_time -= clock_step;
 				if (second.isReady()) {
-						// Serial.println(access_time);
-						// Serial.println(add_time);
-						// Serial.println(del);
 
 						digitalWrite(buzzer_pin, HIGH);
 						switch (remote_check()) {
@@ -584,26 +587,23 @@ void update(){
 
 }
 
-
+void smoke_request(){
+	digitalWrite(smoke_pin , HIGH);
+	delay(1000);
+	digitalWrite(smoke_pin , LOW);
+}
 
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
-		Serial.begin(9600);
-		Serial.println("1");
+		pinMode(smoke_pin, OUTPUT);
+		// Serial.begin(9600);
 		mp3_setup();
-		Serial.println("1");
 		led_strip_setup();
-		Serial.println("1");
 		rfid_setup();
-		Serial.println("1");
 		led_setup();
-		Serial.println("1");
 		lcd_setup();
-		// delay(500);
 		sd_setup();
-		Serial.println("1");
 		sd_load_config();
-		Serial.println("1");
 		mpu_setup();
 
 
@@ -615,7 +615,6 @@ void pre_init(){
 		// mpu_second_treshold = config[11];
 		mpu_first_treshold = 500;
 		mpu_second_treshold = 800;
-		// access_time_config = config[12];
 		access_time_config = config[12];
 		five_second.setMode(0);
 		ignore_time.setMode(0);
@@ -631,14 +630,12 @@ void post_init(){
 }
 
 void lcd_time_print(){
-		// access_time = 60000;
 		if (access_time >= 0) {
 				char lcd_time[] = "       00:00";
 				int minuts = access_time / 60000;
 				int seconds = access_time % 60000 / 1000;
 				lcd_time[7] = (char)((minuts / 10) + 48);
 				lcd_time[8] = (char)((minuts % 10) + 48);
-				// lcd_time[9] = ':';
 				lcd_time[10] = (char)((seconds / 10) + 48);
 				lcd_time[11] = (char)((seconds % 10) + 48);
 				lcd_print(0, lcd_time);
@@ -646,7 +643,7 @@ void lcd_time_print(){
 }
 
 void stage_a(int iteration) { // keyboard
-		mp3_play(conifg_num + i + 1);
+		// mp3_play(conifg_num + i + 1);
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
@@ -688,7 +685,7 @@ void stage_a(int iteration) { // keyboard
 
 
 void stage_b(int iteration) { // artefacts
-		mp3_play(conifg_num + i + 2);
+		// mp3_play(conifg_num + i + 2);
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
@@ -718,7 +715,7 @@ void stage_b(int iteration) { // artefacts
 }
 
 void stage_c(int iteration) { // jumpers
-		mp3_play(conifg_num + i + 3);
+		// mp3_play(conifg_num + i + 3);
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
@@ -768,6 +765,7 @@ void final_block(){
 }
 
 void finish_a(){
+		smoke_request();
 		lcd_print(0,"********************");
 		lcd_print(1,"******C9H13NO3******");
 		lcd_print(2,"********************");
@@ -775,9 +773,8 @@ void finish_a(){
 
 		mp3_play(2);
 		for (int i = 255; i >= 0; i--) {
-				pixels.setBrightness(i);
-				delay(20);
-				pixels.show();
+			led_strip_brightness(i);
+			delay(20);
 		}
 		while(true) {delay(1000);}     // wait for reset
 }
@@ -793,7 +790,9 @@ void setup() {
 		for (int i = 0; i < 3; i++) {
 				stage_a(i);
 				stage_b(i);
-				stage_c(i);
+		}
+		for (int i = 0; i < sizeof(jumper_pins); i++) {
+			stage_c(i);
 		}
 		final_block();
 		finish_a();
