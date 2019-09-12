@@ -453,7 +453,10 @@ int clock_step = 40;
 
 GTimer_ms step_time(clock_step); // try change this to 20 or 50
 GTimer_ms second(1000);
+
 GTimer_ms ten_second(10000);
+
+GTimer_ms jump_delay(5000);
 
 
 GTimer_ms five_second(5000);
@@ -636,6 +639,7 @@ void pre_init(){
 		access_time_config = config[12];
 		five_second.setMode(0);
 		ignore_time.setMode(0);
+		jump_delay.setMode(0);
 }
 
 void post_init(){
@@ -732,10 +736,15 @@ void stage_b(int iteration) { // artefacts
 		finish_b();
 }
 
+
 void stage_c(int iteration) { // jumpers
 		// mp3_play(conifg_num + i + 3);
 		while(time > 0) {
 				update();
+				if (jump_delay.isReady()){
+					step_time.setInterval(clock_step/2);
+					second.setInterval(1000/2);
+				}
 				if (five_second.isReady()) {
 						if (update_flag) {
 								lcd_clear();
@@ -754,6 +763,9 @@ void stage_c(int iteration) { // jumpers
 						lcd_time_print();
 						if (digitalRead(jumper_pins[iteration])) {             /*stage finished*/
 								update_flag = true;
+								jump_delay.reset();
+								step_time.setInterval(clock_step/2);
+								second.setInterval(1000/2);
 								return;
 						}
 				}
