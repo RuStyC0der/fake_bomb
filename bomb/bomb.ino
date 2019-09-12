@@ -744,7 +744,7 @@ void stage_c(int iteration) { // jumpers
 				update();
 				if (jump_delay.isReady()){
 					clock_step *= 2;
-					second.setInterval(1000/2);
+					second.setInterval(500);
 				}
 				if (five_second.isReady()) {
 						if (update_flag) {
