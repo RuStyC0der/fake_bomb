@@ -51,8 +51,8 @@ int smoke_pin = 13;
 ////////////////////////////////////////////////////////////////////////////////
 // LED line
 #include <Adafruit_NeoPixel.h>
-#define PIN   7
-#define NUMPIXELS 14
+#define PIN   26
+#define NUMPIXELS 17
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
@@ -521,22 +521,23 @@ void access_granted(){
 		//bomb reaction
 }
 
-int min_br = 50, max_br = 255, step_br = 1;
+int min_br = 10, max_br = 250, step_br = 4;
 int current_br = min_br;
 
 void update(){
 		if (step_time.isReady()) {
 
 				if (five_second.isReady()){
-					led_strip_color(255,0,0);
+					led_strip_color(255,255,0);
 				}else{
-					led_strip_color(0,255,0);
+					led_strip_color(255,0,0);
 				}
 
-				if (current_br >= max_br && step_br == 1){
-					step_br = -1;
-				} else if (current_br <= min_br && step_br == -1){
-					step_br = 1;
+				if (current_br >= max_br && step_br == 4){
+					step_br = -4;
+				} else if (current_br <= min_br && step_br == -4){
+					step_br = 4;
+
 				}
 
 				led_strip_brightness(current_br);
@@ -742,7 +743,7 @@ void stage_c(int iteration) { // jumpers
 		while(time > 0) {
 				update();
 				if (jump_delay.isReady()){
-					step_time.setInterval(clock_step/2);
+					clock_step *= 2;
 					second.setInterval(1000/2);
 				}
 				if (five_second.isReady()) {
@@ -764,8 +765,8 @@ void stage_c(int iteration) { // jumpers
 						if (digitalRead(jumper_pins[iteration])) {             /*stage finished*/
 								update_flag = true;
 								jump_delay.reset();
-								step_time.setInterval(clock_step/2);
-								second.setInterval(1000/2);
+								clock_step /= 2;
+								second.setInterval(1000);
 								return;
 						}
 				}
@@ -821,7 +822,7 @@ void setup() {
 				stage_a(i);
 				stage_b(i);
 		}
-		for (int i = 0; i < sizeof(jumper_pins); i++) {
+		for (int i = 0; i < 3; i++) {
 			stage_c(i);
 		}
 		final_block();
