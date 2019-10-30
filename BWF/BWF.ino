@@ -1,34 +1,34 @@
 #include "GyverTimer.h"
 
-byte buzzer_pin = 8; //change me
 
+
+byte buzzer_pin = 8; 
 byte start_button_pin = 12;
-byte end_keys_pins[4] = {14,15,16,17}; // CHANGE ME BITCH!!!!!!!
+byte end_keys_pins[4] = {14,15,16,17};
 byte disactivation_key_pin = 45;
-// byte disactivation_key_pin = 13;
 
 byte jumper_pins[3] = {A8,A9,A10};
 
 byte artefact_list_pins[3] = {30,32,34};
-// int artefact_led_pins[3] = {36,38,40}; // UNUSED
 
 char keypad_presed_keys[3] = "___";
 
-extern int config[];
+int config[] = {
+5400000, // 0: work time
+120000, // 1: del time
+10000, // 2: ignore time
+300000, // 3: add time
+111, // 4: first key code
+222, // 5: second key code
+333, // 6: thrid key code
+444, // 7: first stage code
+555, // 8: second stage code
+666, // 9: thrid stage code
+4000, // 10: first mpu treshold
+8000, // 11: second mpu treshold
+60000, // 12: rfid access time
+};
 
-// config array structure
-// 0: work time
-// 1: del time
-// 2: fine wait time
-// 3: add time
-// 4: first key code
-// 5: second key code
-// 6: thrid key code
-// 7: first stage code
-// 8: second stage code
-// 9: thrid stage code
-// 10: first mpu treshold
-// 11: second mpu treshold
 
 ////////////////////////////////////////////////////////////////////////////////
 //sound folder structure
@@ -46,11 +46,7 @@ extern int config[];
 // PROTOTYPES
 void led_strip_setup();
 void led_strip_color(int, int, int);
-void sd_setup();
-bool sd_load_config(int*, int);
 void led_strip_Brightness(int);
-void rfid_setup();
-int rfid_authentificate();
 int remote_check();
 void mp3_setup();
 void mp3_play(int);
@@ -63,6 +59,14 @@ void lcd_setup();
 void lcd_enable();
 void lcd_clear();
 void lcd_print(int line_num, char str[]);
+void gerkon_setup();
+bool gerkon_auth(); 
+
+
+// void rfid_setup();
+// int rfid_authentificate();
+// void sd_setup();
+// bool sd_load_config(int*, int);
 
 ////////////////////////////////////////////////////////////////////////////////
 // logic
@@ -143,7 +147,6 @@ void update(){
 						// Serial.println(access_time);
 						// Serial.println(add_time);
 						// Serial.println(del);
-
 						digitalWrite(buzzer_pin, HIGH);
 						switch (remote_check()) {
 						case 0:
@@ -152,7 +155,7 @@ void update(){
 								time += time_move_step;
 								break;
 						case 2:
-								time -= time_move_step;
+								alarm();
 								break;
 						case 3:
 								// move for 3 chanel triger
@@ -163,13 +166,10 @@ void update(){
 						}
 				}
 
-				switch (rfid_authentificate()) {
-				case 0:
+				switch (gerkon_auth()) {
+				case false:
 						break;
-				case 1:
-						time_added();
-						break;
-				case 2:
+				case true:
 						if (access_time < 0) {
 								access_granted();
 						}
@@ -189,8 +189,6 @@ void update(){
 										alarm();
 										break;
 								}
-
-								// if (keypad_check() || keys_check()) {
 								if (keypad_check()) {
 										alarm();
 								}
@@ -211,11 +209,10 @@ void pre_init(){
 		Serial.begin(9600);
 		mp3_setup();
 		led_strip_setup();
-		rfid_setup();
+		gerkon_setup();
 		led_setup();
 		lcd_setup();
-		sd_setup();
-		sd_load_config();
+
 		mpu_setup(config[10], config[11]);
 
 

@@ -243,7 +243,7 @@ int remote_check(){
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
-SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+SoftwareSerial mySoftwareSerial(10, 12); // RX, TX
 DFRobotDFPlayerMini myDFPlayer;
 
 void mp3_setup()
@@ -705,7 +705,7 @@ void stage_a(int iteration) { // keyboard
 		finish_b();
 }
 
-
+bool flag;
 
 void stage_b(int iteration) { // artefacts
 		// mp3_play(conifg_num + i + 2);
@@ -728,7 +728,16 @@ void stage_b(int iteration) { // artefacts
 						}
 						lcd_time_print();
 
-						if (digitalRead(artefact_list_pins[iteration])) {             /*stage finished*/
+						flag = true;
+
+						for (int i = 0; i <= iteration; i++) {
+							if (!digitalRead(artefact_list_pins[i])){
+								flag = false;
+								break;
+							}
+						}
+
+						if (flag) {             /*stage finished*/
 								update_flag = true;
 								return;
 						}
@@ -742,10 +751,10 @@ void stage_c(int iteration) { // jumpers
 		// mp3_play(conifg_num + i + 3);
 		while(time > 0) {
 				update();
-				if (jump_delay.isReady()){
-					clock_step *= 2;
-					second.setInterval(500);
-				}
+				// if (jump_delay.isReady()){
+				// 	clock_step *= 2;
+				// 	second.setInterval(500);
+				// }
 				if (five_second.isReady()) {
 						if (update_flag) {
 								lcd_clear();
@@ -762,13 +771,24 @@ void stage_c(int iteration) { // jumpers
 								}
 						}
 						lcd_time_print();
-						if (digitalRead(jumper_pins[iteration])) {             /*stage finished*/
+
+						flag = true;
+
+						for (int i = 0; i <= iteration; i++) {
+							if (!digitalRead(jumper_pins[i])){
+								flag = false;
+								break;
+							}
+						}
+
+						if (flag) {             /*stage finished*/
 								update_flag = true;
-								jump_delay.reset();
-								clock_step /= 2;
-								second.setInterval(1000);
+								// jump_delay.reset();
+								// clock_step /= 2;
+								// second.setInterval(1000);
 								return;
 						}
+
 				}
 		}
 		finish_b();
@@ -821,9 +841,7 @@ void setup() {
 		for (int i = 0; i < 3; i++) {
 				stage_a(i);
 				stage_b(i);
-		}
-		for (int i = 0; i < 3; i++) {
-			stage_c(i);
+        stage_c(i);
 		}
 		final_block();
 		finish_a();
