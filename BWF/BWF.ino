@@ -1,7 +1,5 @@
 #include "GyverTimer.h"
 
-
-
 byte buzzer_pin = 8; 
 byte start_button_pin = 12;
 byte end_keys_pins[4] = {14,15,16,17};
@@ -11,9 +9,9 @@ byte jumper_pins[3] = {A8,A9,A10};
 
 byte artefact_list_pins[3] = {30,32,34};
 
-char keypad_presed_keys[3] = "___";
+char keypad_presed_keys[3] = {'_', '_', '_'};
 
-int config[] = {
+long int config[] = {
 5400000, // 0: work time
 120000, // 1: del time
 10000, // 2: ignore time
@@ -29,6 +27,22 @@ int config[] = {
 60000, // 12: rfid access time
 };
 
+
+byte stage_colors[3][3] = {
+	{255,255,0},
+	{0,0,255},
+	{255,0,0}
+};
+byte alarm_colors[3][3] = {
+	{255,0,0},
+	{0,255,255},
+	{0,0,255}
+};
+
+int alarm_actual_color[3] = {0,0,0};
+
+int min_brightness = 10, max_brightness = 250, step_brightness = 4;
+int current_brightness = min_brightness;
 
 ////////////////////////////////////////////////////////////////////////////////
 //sound folder structure
@@ -86,7 +100,7 @@ GTimer_ms ignore_time(10000);
 unsigned int access_time_config;
 unsigned int del_time;
 unsigned int add_time;
-unsigned int time_move_step = 300000;
+int time_move_step = 300000;
 
 
 long time;
@@ -100,7 +114,7 @@ void mpu_alarm(){
 		update_flag = true;
 		ignore_time.reset();
 		five_second.reset();
-		led_strip_color(200, 0, 0);
+		led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
 		mp3_play(3);
 }
 
@@ -139,6 +153,15 @@ void access_granted(){
 
 void update(){
 		if (step_time.isReady()) {
+				if (current_brightness >= max_brightness && step_brightness == 4){
+					step_brightness = -step_brightness;
+				} else if (current_brightness <= min_brightness && step_brightness == -4){
+					step_brightness = step_brightness;
+				}
+
+				led_strip_Brightness(current_brightness);
+				current_brightness += step_brightness;
+			
 				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
 				time -= clock_step;
@@ -251,12 +274,15 @@ void lcd_time_print(){
 }
 
 void stage_a(int iteration) { // keyboard
+		alarm_actual_color[0] = alarm_colors[iteration][0];
+		alarm_actual_color[1] = alarm_colors[iteration][1];
+		alarm_actual_color[2] = alarm_colors[iteration][2];
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
 						if (update_flag) {
 								lcd_clear();
-								led_strip_color(0,255,0);
+								led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][3]);
 								char line[] = "Введiть код # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
 								lcd_print(1, line);
@@ -292,13 +318,16 @@ void stage_a(int iteration) { // keyboard
 
 
 void stage_b(int iteration) { // artefacts
+		alarm_actual_color[0] = alarm_colors[iteration][0];
+		alarm_actual_color[1] = alarm_colors[iteration][1];
+		alarm_actual_color[2] = alarm_colors[iteration][2];
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
 						if (update_flag) {
 								lcd_clear();
 								update_flag = false;
-								led_strip_color(0,255,0);
+								led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][3]);
 								char line[] = "Вставте артефакт # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
 								lcd_print(2, line);
@@ -321,13 +350,16 @@ void stage_b(int iteration) { // artefacts
 }
 
 void stage_c(int iteration) { // jumpers
+		alarm_actual_color[0] = alarm_colors[iteration][0];
+		alarm_actual_color[1] = alarm_colors[iteration][1];
+		alarm_actual_color[2] = alarm_colors[iteration][2];
 		while(time > 0) {
 				update();
 				if (five_second.isReady()) {
 						if (update_flag) {
 								lcd_clear();
 								update_flag = false;
-								led_strip_color(0,255,0);
+								led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][3]);
 								char line[] = "Вставте перемичку # ";
 								line[sizeof(line) - 2] = (char)(iteration + 49);
 								lcd_print(2, line);
