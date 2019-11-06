@@ -2,7 +2,6 @@
 
 byte buzzer_pin = 8; 
 byte start_button_pin = 12;
-byte end_keys_pins[4] = {14,15,16,17};
 byte disactivation_key_pin = 45;
 
 byte jumper_pins[3] = {A8,A9,A10};
@@ -10,6 +9,8 @@ byte jumper_pins[3] = {A8,A9,A10};
 byte artefact_list_pins[3] = {30,32,34};
 
 char keypad_presed_keys[3] = {'_', '_', '_'};
+
+extern byte end_keys_pins[4];
 
 long int config[] = {
 5400000, // 0: work time
@@ -41,7 +42,7 @@ byte alarm_colors[3][3] = {
 
 int alarm_actual_color[3] = {0,0,0};
 
-int min_brightness = 10, max_brightness = 250, step_brightness = 4;
+int min_brightness = 10, max_brightness = 125, step_brightness = 4;
 int current_brightness = min_brightness;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +76,9 @@ void lcd_clear();
 void lcd_print(int line_num, char str[]);
 void gerkon_setup();
 bool gerkon_auth(); 
-
+void end_keys_setup();
+int end_keys_presed_count();
+void end_keys_light_brightness(byte br);
 
 // void rfid_setup();
 // int rfid_authentificate();
@@ -85,21 +88,19 @@ bool gerkon_auth();
 ////////////////////////////////////////////////////////////////////////////////
 // logic
 
-int clock_step = 40;
+int clock_step_ms = 40;
 
-GTimer_ms step_time(clock_step); // try change this to 20 or 50
+GTimer_ms step_time(clock_step_ms); // try change this to 20 or 50
 GTimer_ms second(1000);
-GTimer_ms ten_second(10000);
+GTimer_ms end_cycle_timer(10000);
 
 
-GTimer_ms five_second(5000);
+GTimer_ms no_update_time(5000);
 
-GTimer_ms ignore_time(10000);
+GTimer_ms touch_ignore_time(10000);
 
 
-unsigned int access_time_config;
-unsigned int del_time;
-unsigned int add_time;
+unsigned int forfeit_time;
 int time_move_step = 300000;
 
 
@@ -112,8 +113,8 @@ bool update_flag = true;
 void mpu_alarm(){
 		lcd_clear();
 		update_flag = true;
-		ignore_time.reset();
-		five_second.reset();
+		touch_ignore_time.reset();
+		no_update_time.reset();
 		led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
 		mp3_play(3);
 }
@@ -121,21 +122,11 @@ void mpu_alarm(){
 void alarm(){
 		lcd_clear();
 		update_flag = true;
-		ignore_time.reset();
-		five_second.reset();
-		led_strip_color(255, 0, 0);
+		touch_ignore_time.reset();
+		no_update_time.reset();
+		led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
 		mp3_play(4);
-		time -= del_time;
-}
-
-int keys_check(){
-		int pressed_keys_count = 0;
-		for(int i = 0; i<sizeof(end_keys_pins); i++) {
-				if (digitalRead(end_keys_pins[i])) {
-						pressed_keys_count += 1;
-				}
-		}
-		return pressed_keys_count;
+		time -= forfeit_time;
 }
 
 void time_added(){
@@ -144,7 +135,7 @@ void time_added(){
 }
 
 void access_granted(){
-		access_time = access_time_config;
+		access_time = config[12];
 		mp3_play(5);
 
 		//bomb reaction
@@ -164,11 +155,10 @@ void update(){
 			
 				digitalWrite(buzzer_pin, LOW);
 				led_print_time(time);
-				time -= clock_step;
-				access_time -= clock_step;
+				time -= clock_step_ms;
+				access_time -= clock_step_ms;
 				if (second.isReady()) {
 						// Serial.println(access_time);
-						// Serial.println(add_time);
 						// Serial.println(del);
 						digitalWrite(buzzer_pin, HIGH);
 						switch (remote_check()) {
@@ -180,28 +170,18 @@ void update(){
 						case 2:
 								alarm();
 								break;
-						case 3:
-								// move for 3 chanel triger
-								break;
-						case 4:
-								// move for 4 chanel triger
-								break;
 						}
 				}
 
 				switch (gerkon_auth()) {
-				case false:
-						break;
-				case true:
-						if (access_time < 0) {
-								access_granted();
-						}
-						break;
+          case true:
+              if (access_time < 0) {
+                  access_granted();
+              }
+              break;
 				}
-
 				if (access_time < 0) {
-
-						if (ignore_time.isReady()) {
+						if (touch_ignore_time.isReady()) {
 								switch (mpu_check()) {
 								case 0:
 										break;
@@ -222,7 +202,6 @@ void update(){
 						keypad_update_keys(keypad_presed_keys);
 				}
 		}
-
 }
 
 
@@ -240,20 +219,18 @@ void pre_init(){
 
 
 		time = config[0];
-		del_time = config[1];
-		ignore_time.setInterval(config[2]);
-		add_time = config[3];
-		access_time_config = config[12];
+		forfeit_time = config[1];
+		touch_ignore_time.setInterval(config[2]);
 
-		five_second.setMode(0);
-		ignore_time.setMode(0);
+		no_update_time.setMode(0);
+		touch_ignore_time.setMode(0);
 }
 
 void post_init(){
 		mp3_play(1);
 		led_enable();
 		lcd_enable();
-		five_second.reset();
+		no_update_time.reset();
 		lcd_print(1, "  БOMБУ AKTИBOBAHO");
 		lcd_print(2, "   BIДЛIK ПOЧATO");
 }
@@ -279,7 +256,7 @@ void stage_a(int iteration) { // keyboard
 		alarm_actual_color[2] = alarm_colors[iteration][2];
 		while(time > 0) {
 				update();
-				if (five_second.isReady()) {
+				if (no_update_time.isReady()) {
 						if (update_flag) {
 								lcd_clear();
 								led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][3]);
@@ -295,8 +272,6 @@ void stage_a(int iteration) { // keyboard
 						}
 						lcd_time_print();
 						lcd_print(2, keypad_presed_keys);
-
-
 
 						if (keypad_presed_keys[2] != '_') {
 								int num = 0;
@@ -323,7 +298,7 @@ void stage_b(int iteration) { // artefacts
 		alarm_actual_color[2] = alarm_colors[iteration][2];
 		while(time > 0) {
 				update();
-				if (five_second.isReady()) {
+				if (no_update_time.isReady()) {
 						if (update_flag) {
 								lcd_clear();
 								update_flag = false;
@@ -355,7 +330,7 @@ void stage_c(int iteration) { // jumpers
 		alarm_actual_color[2] = alarm_colors[iteration][2];
 		while(time > 0) {
 				update();
-				if (five_second.isReady()) {
+				if (no_update_time.isReady()) {
 						if (update_flag) {
 								lcd_clear();
 								update_flag = false;
@@ -384,14 +359,16 @@ void stage_c(int iteration) { // jumpers
 
 void final_block(){
 		mp3_play(9);
-		ten_second.reset();
+		end_cycle_timer.reset();
 		lcd_clear();
 		lcd_print(2,"ВСТАВТЕ КЛЮЧ ДЕ3АКТИВАЦII");
 		// lcd_print(3,"Та натисніть секретні кнопки");
-		while ((keys_check() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
-				update();
+		max_brightness = 255;
+		while ((end_keys_presed_count() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
+        end_keys_light_brightness(current_brightness);
+        update();
 
-				if (ten_second.isReady()) {
+				if (end_cycle_timer.isReady()) {
 						mp3_play(9);
 				}
 
@@ -402,7 +379,7 @@ void final_block(){
 
 void finish_a(){
 		mp3_play(2);
-		for (int i = 255; i >= 0; i--) {
+		for (int i = current_brightness; i >= 0; i--) {
 				led_strip_Brightness(i);
 				delay(20);
 
@@ -411,6 +388,7 @@ void finish_a(){
 }
 
 void finish_b(){
+		digitalWrite(buzzer_pin, HIGH);
 		while(true) {delay(1000);}      // wait for reset
 }
 

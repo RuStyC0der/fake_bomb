@@ -47,7 +47,6 @@ int mpu_check(/* arguments */) {
 
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
 		sum = abs(_mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
-		// Serial.println(sum);
 
 		if (sum > mpu_second_treshold) {
 				return 2;
