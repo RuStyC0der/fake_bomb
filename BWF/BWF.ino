@@ -126,7 +126,6 @@ void alarm(){
 		no_update_time.reset();
 		led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
 		mp3_play(4);
-		time -= forfeit_time;
 }
 
 void time_added(){
@@ -169,7 +168,11 @@ void update(){
 								break;
 						case 2:
 								alarm();
+								time -= forfeit_time;
 								break;
+						case 3:
+								alarm();
+								break; 
 						}
 				}
 
@@ -190,10 +193,13 @@ void update(){
 										break;
 								case 2:
 										alarm();
+										time -= forfeit_time;
+
 										break;
 								}
 								if (keypad_check()) {
 										alarm();
+										time -= forfeit_time;
 								}
 						}else{
 								mpu_check();
@@ -367,14 +373,11 @@ void final_block(){
 		while ((end_keys_presed_count() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
         end_keys_light_brightness(current_brightness);
         update();
-
 				if (end_cycle_timer.isReady()) {
 						mp3_play(9);
 				}
-
 				if (time <= 0) {finish_b();}         // finish b if timeout
 		}
-
 }
 
 void finish_a(){
@@ -382,7 +385,6 @@ void finish_a(){
 		for (int i = current_brightness; i >= 0; i--) {
 				led_strip_Brightness(i);
 				delay(20);
-
 		}
 		while(true) {delay(1000);}     // wait for reset
 }
