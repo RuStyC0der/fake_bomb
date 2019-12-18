@@ -537,7 +537,6 @@ void update(){
 					step_br = -4;
 				} else if (current_br <= min_br && step_br == -4){
 					step_br = 4;
-
 				}
 
 				led_strip_brightness(current_br);

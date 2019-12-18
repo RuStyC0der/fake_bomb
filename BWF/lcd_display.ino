@@ -10,6 +10,8 @@ void lcd_setup()
 {
 		lcd.init();
 		lcd.noBacklight();
+		Serial.print(" Lcd status is : ");
+		Serial.println(lcd.status());
 }
 
 void lcd_enable(/* arguments */) {

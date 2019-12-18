@@ -1,12 +1,12 @@
 #include "GyverTimer.h"
 
 byte buzzer_pin = 8; 
-byte start_button_pin = 12;
+byte start_button_pin = 41;
 byte disactivation_key_pin = 45;
 
 byte jumper_pins[3] = {A8,A9,A10};
 
-byte artefact_list_pins[3] = {30,32,34};
+byte artefact_list_pins[3] = {34,32,30};
 
 char keypad_presed_keys[3] = {'_', '_', '_'};
 
@@ -79,6 +79,9 @@ bool gerkon_auth();
 void end_keys_setup();
 int end_keys_presed_count();
 void end_keys_light_brightness(byte br);
+void smoke_setup();
+void smoke_run();
+
 
 // void rfid_setup();
 // int rfid_authentificate();
@@ -111,33 +114,30 @@ bool update_flag = true;
 
 
 void mpu_alarm(){
-		lcd_clear();
-		update_flag = true;
-		touch_ignore_time.reset();
-		no_update_time.reset();
-		led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
-		mp3_play(3);
+	Serial.println("mpu_alarm");
+	lcd_clear();
+	update_flag = true;
+	touch_ignore_time.reset();
+	no_update_time.reset();
+	led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
+	mp3_play(3);
 }
 
 void alarm(){
-		lcd_clear();
-		update_flag = true;
-		touch_ignore_time.reset();
-		no_update_time.reset();
-		led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
-		mp3_play(4);
-}
-
-void time_added(){
-		time += time_move_step;
-		// bomb reaction
+	Serial.println("alarm");
+	lcd_clear();
+	update_flag = true;
+	touch_ignore_time.reset();
+	no_update_time.reset();
+	led_strip_color(alarm_actual_color[0], alarm_actual_color[1], alarm_actual_color[2]);
+	mp3_play(4);
 }
 
 void access_granted(){
-		access_time = config[12];
-		mp3_play(5);
-
-		//bomb reaction
+	Serial.println("access_granted");
+	access_time = config[12];
+	mp3_play(5);
+	//bomb reaction
 }
 
 
@@ -168,9 +168,11 @@ void update(){
 								break;
 						case 2:
 								alarm();
+								Serial.println("remote alarm - time");
 								time -= forfeit_time;
 								break;
 						case 3:
+								Serial.println("remote alarm");
 								alarm();
 								break; 
 						}
@@ -215,6 +217,7 @@ void update(){
 void pre_init(){
 		pinMode(buzzer_pin, OUTPUT);
 		Serial.begin(9600);
+		smoke_setup();
 		mp3_setup();
 		led_strip_setup();
 		gerkon_setup();
@@ -222,7 +225,6 @@ void pre_init(){
 		lcd_setup();
 
 		mpu_setup(config[10], config[11]);
-
 
 		time = config[0];
 		forfeit_time = config[1];
@@ -396,7 +398,8 @@ void finish_b(){
 
 void setup() {
 		pre_init();
-		while (!digitalRead(start_button_pin)) {}     // wait to push start button
+		// Serial.println("SOS");
+		// while (!digitalRead(start_button_pin)) {}     // wait to push start button
 		post_init();
 		for (int i = 0; i < 3; i++) {
 				stage_a(i);
