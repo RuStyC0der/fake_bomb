@@ -1,9 +1,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 //remote control
-#define chanel_pin_1 22
-#define chanel_pin_2 24
+#define REMOTE_DISABLE 0
+
+#if REMOTE_DISABLE == 0 
+
+#define chanel_pin_1 48
+#define chanel_pin_2 49
 #define chanel_pin_3 53
 // #define chanel_pin_4 
+
+void remote_setup(){
+	pinMode(chanel_pin_1, INPUT);
+	pinMode(chanel_pin_2, INPUT);
+	pinMode(chanel_pin_3, INPUT);
+}
 
 int remote_check(){
 		if (digitalRead(chanel_pin_1)) {
@@ -19,3 +29,10 @@ int remote_check(){
 		}
 		// return 0;
 }
+
+#else
+
+int remote_check(){
+	Serial.println(F("remote_check called, but it disabled!"));
+	}
+#endif

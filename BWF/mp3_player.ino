@@ -6,7 +6,7 @@
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
-SoftwareSerial mySoftwareSerial(10, 12); // RX, TX
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
 DFRobotDFPlayerMini myDFPlayer;
 
 void mp3_setup()
@@ -17,7 +17,7 @@ void mp3_setup()
 		while (true);
 	}
 	Serial.println(F("DFPlayer Mini online."));
-	myDFPlayer.volume(20);     //Set volume value. From 0 to 30
+	myDFPlayer.volume(10);     //Set volume value. From 0 to 30
 	//myDFPlayer.play(4);
 }
 

@@ -1,5 +1,5 @@
-byte end_keys_pins[4] = {14,15,16,17};
-byte end_keys_light_pin = 11; // this is not 11
+byte end_keys_pins[4] = {A12,A13,A14,A15};
+byte end_keys_light_pin = 46; // this is not 11
 
 void end_keys_setup(){
     pinMode(end_keys_light_pin, OUTPUT);

@@ -7,7 +7,7 @@ float min_bat_treshold_or = 2.9;
 float drawdown_factor = 0.88;
 float temp_treshold = 60;
 
-int mosfet_pin = 6;\
+int mosfet_pin = 51;
 int bat_pin = A3;
 bool status = false;
 
@@ -41,7 +41,7 @@ float smoke_battary_voltage(){
 }
 
 
-GTimer_ms wait_time(5000);
+GTimer_ms wait_time(12000);
 
 void smoke_setup(){
 	pinMode(mosfet_pin, OUTPUT);
@@ -49,12 +49,15 @@ void smoke_setup(){
 }
 
 
-void smoke_run(){
+bool smoke_run(){
 		if ((smoke_battary_voltage() > min_bat_treshold) and (wait_time.isReady())){
 			digitalWrite(mosfet_pin, HIGH);
-			delayMicroseconds(500);
+			delay(10);
 			digitalWrite(mosfet_pin, LOW);
-        }
+			return true;
+        }else{
+			return false;
+		}
 }
 
 
