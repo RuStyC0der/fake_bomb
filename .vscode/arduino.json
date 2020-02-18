@@ -1,6 +1,6 @@
 {
     "board": "arduino:avr:mega",
     "configuration": "cpu=atmega2560",
-    "sketch": "tests/tests.ino",
+    "sketch": "BWF/BWF.ino",
     "port": "/dev/ttyUSB0"
 }

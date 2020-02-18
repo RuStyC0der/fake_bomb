@@ -75,6 +75,7 @@ void lcd_setup();
 void lcd_enable();
 void lcd_clear();
 void lcd_print(int line_num, char str[]);
+void lcd_print(int line_num, long value, int cursor = 0);
 void gerkon_setup();
 bool gerkon_auth(); 
 void end_keys_setup();
@@ -139,7 +140,7 @@ void access_granted(){
 void update(){
 
 	bool isUpTreshold = (current_brightness >= max_brightness && step_brightness > 0);
-	bool isDownTreshold = (current_brightness <= min_brightness && step_brightness < 0)
+	bool isDownTreshold = (current_brightness <= min_brightness && step_brightness < 0);
 
 	if (isUpTreshold || isDownTreshold){
 		step_brightness = -step_brightness;
@@ -157,6 +158,7 @@ void update(){
 
 	if (second.isReady()) {
 			digitalWrite(buzzer_pin, HIGH);
+
 			switch (remote_check()) {
 			case 0:
 					break;
@@ -175,34 +177,29 @@ void update(){
 			}
 	}
 
-	switch (gerkon_auth()) {
-	case 1:
-		if (access_time < 0) {
-			access_granted();
-			Serial.println("access_g");
-		}
-		break;
-			}
-	if (access_time < 0) {
-			if (touch_ignore_time.isReady()) {
-					if (keypad_check()) {
-							Serial.println("alarm keypad");
 
-							alarm();
-							time -= forfeit_time;
-					}
+	if (access_time < 0 & gerkon_auth()) {
+		access_granted();
+		Serial.println("access_g");
+	}
+
+	if (access_time < 0) {
+			if (touch_ignore_time.isReady() & keypad_check()) {
+				Serial.println("alarm keypad");
+				alarm();
+				time -= forfeit_time;
 			}
 	}else{
 			keypad_update_keys(keypad_presed_keys);
 	}
-	delay(step_time)	
+	delay(clock_step_ms);
 }
 
 
 
 void pre_init(){
-		pinMode(buzzer_pin, OUTPUT);
 		Serial.begin(9600);
+		pinMode(buzzer_pin, OUTPUT);
 		smoke_setup();
 		mp3_setup();
 		led_strip_setup();
@@ -220,26 +217,18 @@ void pre_init(){
 }
 
 void post_init(){
-		mp3_play(1);
 		led_enable();
 		lcd_enable();
-		no_update_time.reset();
+
+		mp3_play(1);
 		lcd_print(1, "  БOMБУ AKTИBOBAHO");
 		lcd_print(2, "   BIДЛIK ПOЧATO");
+
+		no_update_time.reset();
 }
 
 void lcd_time_print(){
-		if (access_time >= 0) {
-				char lcd_time[] = "       00:00";
-				int minuts = access_time / 60000;
-				int seconds = access_time % 60000 / 1000;
-				lcd_time[7] = (char)((minuts / 10) + 48);
-				lcd_time[8] = (char)((minuts % 10) + 48);
-				// lcd_time[9] = ':';
-				lcd_time[10] = (char)((seconds / 10) + 48);
-				lcd_time[11] = (char)((seconds % 10) + 48);
-				lcd_print(0, lcd_time);
-		}
+		if (access_time >= 0) {lcd_print(0, access_time, 5);}
 }
 
 void stage_a(int iteration) {
@@ -275,11 +264,9 @@ void stage_a(int iteration) {
 										return;
 								}
 						}
-				}else{
-
 				}
 		}
-		finish_b();
+		bad_final();
 }
 
 
@@ -313,7 +300,7 @@ void stage_b(int iteration) {
 						}
 				}
 		}
-		finish_b();
+		bad_final();
 }
 
 void stage_c(int iteration) {
@@ -344,7 +331,7 @@ void stage_c(int iteration) {
 						}
 				}
 		}
-		finish_b();
+		bad_final();
 }
 
 
@@ -362,12 +349,12 @@ void final_block(){
 				if (end_cycle_timer.isReady()) {
 						mp3_play(9);
 				}
-				if (time <= 0) {finish_b();}         // finish b if timeout
+				if (time <= 0) {bad_final();}         // finish b if timeout
 		}
 
 }
 
-void finish_a(){
+void good_final(){
 		lcd_print(0,"********************");
 		lcd_print(1,"******C9H13NO3******");
 		lcd_print(2,"********************");
@@ -381,7 +368,7 @@ void finish_a(){
 		while(true) {delay(1000);}     // wait for reset
 }
 
-void finish_b(){
+void bad_final(){
 		digitalWrite(buzzer_pin, HIGH);
 		while(true) {delay(1000);}      // wait for reset
 }
@@ -400,7 +387,7 @@ void setup() {
 				mp3_play(12);
 		}
 		final_block();
-		finish_a();
+		good_final();
 }
 
 void loop() {}

@@ -26,3 +26,8 @@ void lcd_print(int line_num, char str[]){
 		lcd.setCursor(0, line_num);
 		lcd.print(str);
 }
+
+void lcd_print(int line_num, long value, int cursor = 0){
+		lcd.setCursor(cursor, line_num);
+		lcd.print(value);
+}
