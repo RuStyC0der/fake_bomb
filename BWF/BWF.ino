@@ -139,77 +139,80 @@ void access_granted(){
 
 
 void update(){
-		if (step_time.isReady()) {
 
-				if ((current_brightness >= max_brightness && step_brightness > 0) || (current_brightness <= min_brightness && step_brightness < 0)){
-					// Serial.println("toggle");
-					step_brightness = -step_brightness;
-				}
+	bool isUpTreshold = (current_brightness >= max_brightness && step_brightness > 0);
+	bool isDownTreshold = (current_brightness <= min_brightness && step_brightness < 0)
 
-				led_strip_Brightness(current_brightness);
-				current_brightness += step_brightness;
-				digitalWrite(buzzer_pin, LOW);
-				led_print_time(time);
-				time -= clock_step_ms;
-				access_time -= clock_step_ms;
-				if (second.isReady()) {
-						// Serial.println(access_time);
-						// Serial.println(del);
-						digitalWrite(buzzer_pin, HIGH);
-						switch (remote_check()) {
-						case 0:
-								break;
-						case 1:
-								time += time_move_step;
-								break;
-						case 2:
-								alarm();
-								Serial.println("remote alarm - time");
-								time -= forfeit_time;
-								break;
-						case 3:
-								Serial.println("remote alarm");
-								alarm();
-								break; 
-						}
-				}
-
-				switch (gerkon_auth()) {
-				case 1:
-					if (access_time < 0) {
-						access_granted();
-						Serial.println("access_g");
-					}
-					break;
-						}
-				if (access_time < 0) {
-						if (touch_ignore_time.isReady()) {
-								switch (mpu_check()) {
-								case 0:
-										break;
-								case 1:
-										mpu_alarm();
-										break;
-								case 2:
-										alarm();
-										Serial.println("alarm 2l mpu");
-										time -= forfeit_time;
-
-										break;
-								}
-								if (keypad_check()) {
-										Serial.println("alarm keypad");
-
-										alarm();
-										time -= forfeit_time;
-								}
-						}else{
-								mpu_check();
-						}
-				}else{
-						keypad_update_keys(keypad_presed_keys);
-				}
+	if (isUpTreshold || isDownTreshold){
+		step_brightness = -step_brightness;
 		}
+		
+	led_strip_Brightness(current_brightness);
+	current_brightness += step_brightness;
+	
+	digitalWrite(buzzer_pin, LOW);
+	
+	led_print_time(time);
+	
+	time -= clock_step_ms;
+	access_time -= clock_step_ms;
+
+	if (second.isReady()) {
+			digitalWrite(buzzer_pin, HIGH);
+			switch (remote_check()) {
+			case 0:
+					break;
+			case 1:
+					time += time_move_step;
+					break;
+			case 2:
+					alarm();
+					Serial.println("remote alarm - time");
+					time -= forfeit_time;
+					break;
+			case 3:
+					Serial.println("remote alarm");
+					alarm();
+					break; 
+			}
+	}
+
+	switch (gerkon_auth()) {
+	case 1:
+		if (access_time < 0) {
+			access_granted();
+			Serial.println("access_g");
+		}
+		break;
+			}
+	if (access_time < 0) {
+			if (touch_ignore_time.isReady()) {
+					switch (mpu_check()) {
+					case 0:
+							break;
+					case 1:
+							mpu_alarm();
+							break;
+					case 2:
+							alarm();
+							Serial.println("alarm 2l mpu");
+							time -= forfeit_time;
+
+							break;
+					}
+					if (keypad_check()) {
+							Serial.println("alarm keypad");
+
+							alarm();
+							time -= forfeit_time;
+					}
+			}else{
+					mpu_check();
+			}
+	}else{
+			keypad_update_keys(keypad_presed_keys);
+	}
+	delay(step_time)	
 }
 
 
