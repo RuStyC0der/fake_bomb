@@ -68,8 +68,6 @@ int remote_check();
 void remote_setup();
 void mp3_setup();
 void mp3_play(int);
-void mpu_setup(int, int);
-int mpu_check();
 void led_setup();
 void led_print_time(long);
 void led_enable();
@@ -146,7 +144,7 @@ void update(){
 	if (isUpTreshold || isDownTreshold){
 		step_brightness = -step_brightness;
 		}
-		
+
 	led_strip_Brightness(current_brightness);
 	current_brightness += step_brightness;
 	
@@ -187,27 +185,12 @@ void update(){
 			}
 	if (access_time < 0) {
 			if (touch_ignore_time.isReady()) {
-					switch (mpu_check()) {
-					case 0:
-							break;
-					case 1:
-							mpu_alarm();
-							break;
-					case 2:
-							alarm();
-							Serial.println("alarm 2l mpu");
-							time -= forfeit_time;
-
-							break;
-					}
 					if (keypad_check()) {
 							Serial.println("alarm keypad");
 
 							alarm();
 							time -= forfeit_time;
 					}
-			}else{
-					mpu_check();
 			}
 	}else{
 			keypad_update_keys(keypad_presed_keys);
@@ -227,7 +210,6 @@ void pre_init(){
 		led_setup();
 		lcd_setup();
 		remote_setup();
-		mpu_setup(config[10], config[11]);
 
 		time = config[0];
 		forfeit_time = config[1];
