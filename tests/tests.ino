@@ -9,26 +9,29 @@
 #include "/home/unknown/Documents/fake_bomb/BWF/mp3_player.ino"
 #include "/home/unknown/Documents/fake_bomb/BWF/keypad.ino"
 
-
-
 #include "GyverTimer.h"
 
-#define MPU 0
-#define REMOTE 0
-#define LED_strip 0
-#define LED_DISPLAY 0
-#define LCD_DISPLAY 0
+int buzzer_pin = 8;
+
+#define MPU 1
+#define REMOTE 1
+#define LED_strip 1
+#define LED_DISPLAY 1
+#define LCD_DISPLAY 1
 #define MP3 1
-#define END_KEYS 0
-#define GERKON 0
-#define KEYPAD 0
+#define END_KEYS 1
+#define GERKON 1
+#define KEYPAD 1
 #define SMOKE 0
+#define BUZZER 1
 
 
 // test vars :)
 
-GTimer_ms clock(40);
-GTimer_ms mid_timer(5000);
+GTimer_ms clock(80);
+GTimer_ms buzzer_timer(1000);
+
+GTimer_ms mid_timer(8000);
 
 byte counter = 127;
 char keypad_presed_keys[3] = {'_', '_', '_'};
@@ -74,8 +77,8 @@ void LED_strip_setup(){
 void LED_strip_test(){
     Serial.print("LED_strip_test, all colors and brightness is : ");
     Serial.println(counter);
-    led_strip_color(0, 0, counter);
-    led_strip_Brightness(255);
+    led_strip_color(counter, counter, counter);
+    led_strip_Brightness(counter);
     
 }
 #else  
@@ -201,7 +204,20 @@ void SMOKE_setup(){}
 void SMOKE_test(){}
 #endif
 
+#if BUZZER
+void BUZZER_setup(){
+    pinMode(buzzer_pin, OUTPUT);
+}
 
+void BUZZER_test(){
+        digitalWrite(buzzer_pin, HIGH);
+        delay(50);
+        digitalWrite(buzzer_pin, LOW);
+}
+#else  
+void BUZZER_setup(){}
+void BUZZER_test(){}
+#endif
 
 
 void setup(){
@@ -216,9 +232,17 @@ void setup(){
     GERKON_setup();
     KEYPAD_setup();
     SMOKE_setup();
+    BUZZER_setup();
+
 }
 
 void loop(){
+
+    if (buzzer_timer.isReady())
+    {
+        BUZZER_test();
+    }
+
     mpu_test();
     remote_test();
     LED_strip_test();
@@ -230,7 +254,6 @@ void loop(){
     KEYPAD_test();
     SMOKE_test();
     if (clock.isReady()){
-        counter++;
+        counter+=4;
     }
-    delay(1000);
 }
