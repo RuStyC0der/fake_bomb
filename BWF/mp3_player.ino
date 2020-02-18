@@ -6,7 +6,7 @@
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
-SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+SoftwareSerial mySoftwareSerial(10, 12); // RX, TX
 DFRobotDFPlayerMini myDFPlayer;
 
 void mp3_setup()
