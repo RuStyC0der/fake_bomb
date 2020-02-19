@@ -681,7 +681,7 @@ void stage_a(int iteration) { // keyboard
 						//
 				}
 		}
-		finish_b();
+		bad_final();
 }
 
 
@@ -712,7 +712,7 @@ void stage_b(int iteration) { // artefacts
 						}
 				}
 		}
-		finish_b();
+		bad_final();
 }
 
 void stage_c(int iteration) { // jumpers
@@ -740,7 +740,7 @@ void stage_c(int iteration) { // jumpers
 						}
 				}
 		}
-		finish_b();
+		bad_final();
 }
 
 
@@ -759,12 +759,12 @@ void final_block(){
 						mp3_play(9);
 				}
 
-				if (time <= 0) {finish_b();}         // finish b if timeout
+				if (time <= 0) {bad_final();}         // finish b if timeout
 		}
 
 }
 
-void finish_a(){
+void good_final(){
 		lcd_print(0,"********************");
 		lcd_print(1,"******C9H13NO3******");
 		lcd_print(2,"********************");
@@ -779,7 +779,7 @@ void finish_a(){
 		while(true) {delay(1000);}     // wait for reset
 }
 
-void finish_b(){
+void bad_final(){
 		while(true) {delay(1000);}      // wait for reset
 }
 
@@ -796,7 +796,7 @@ void setup() {
 				stage_c(i);
 		}
 		final_block();
-		finish_a();
+		good_final();
 }
 
 void loop() {
