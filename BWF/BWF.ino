@@ -185,6 +185,7 @@ void update(){
 
 	if (access_time < 0) {
 			if (touch_ignore_time.isReady() & keypad_check()) {
+				// TODO: add fake mpu detect :)
 				Serial.println("alarm keypad");
 				alarm();
 				time -= forfeit_time;
@@ -231,25 +232,36 @@ void lcd_time_print(){
 		if (access_time >= 0) {lcd_print(0, access_time, 5);}
 }
 
-void stage_a(int iteration) {
+
+void change_strip_color(int iteration){
 		alarm_actual_color[0] = alarm_colors[iteration][0];
 		alarm_actual_color[1] = alarm_colors[iteration][1];
 		alarm_actual_color[2] = alarm_colors[iteration][2];
+}
+
+void stage_prepare_front(char line[], int iteration, int size_of_line){
+	lcd_clear();
+	led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][2]);
+	
+	line[size_of_line - 2] = (char)(iteration + 49);
+	lcd_print(1, line);
+	if (iteration > 0) {
+			char ch[3];
+			itoa(config[7 + iteration],ch,10);
+			lcd_print(3, ch);
+	}
+	update_flag = false;
+}
+
+
+
+void stage_a(int iteration) {
+		change_strip_color(iteration);
 		while(time > 0) {
 				update();
 				if (no_update_time.isReady()) {
 						if (update_flag) {
-								lcd_clear();
-								led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][2]);
-								char line[] = "Введiть код # ";
-								line[sizeof(line) - 2] = (char)(iteration + 49);
-								lcd_print(1, line);
-								if (iteration > 0) {
-										char ch[3];
-										itoa(config[7 + iteration],ch,10);
-										lcd_print(3, ch);
-								}
-								update_flag = false;
+							stage_prepare_front("Введiть код # ", iteration, sizeof("Введiть код # "));
 						}
 						lcd_time_print();
 						lcd_print(2, keypad_presed_keys);
@@ -272,25 +284,12 @@ void stage_a(int iteration) {
 
 
 void stage_b(int iteration) {
-		alarm_actual_color[0] = alarm_colors[iteration][0];
-		alarm_actual_color[1] = alarm_colors[iteration][1];
-		alarm_actual_color[2] = alarm_colors[iteration][2];
+		change_strip_color(iteration);
 		while(time > 0) {
 				update();
 				if (no_update_time.isReady()) {
 						if (update_flag) {
-								lcd_clear();
-								update_flag = false;
-								led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][2]);
-								char line[] = "Вставте артефакт # ";
-								line[sizeof(line) - 2] = (char)(iteration + 49);
-								lcd_print(2, line);
-								if (iteration > 0) {
-										char ch[3];
-										itoa(config[7 + iteration],ch,10);
-										lcd_print(3, ch);
-								}
-
+								stage_prepare_front("Вставте артефакт # ", iteration, sizeof("Вставте артефакт # "));
 						}
 						lcd_time_print();
 
@@ -304,25 +303,12 @@ void stage_b(int iteration) {
 }
 
 void stage_c(int iteration) {
-		alarm_actual_color[0] = alarm_colors[iteration][0];
-		alarm_actual_color[1] = alarm_colors[iteration][1];
-		alarm_actual_color[2] = alarm_colors[iteration][2];
+		change_strip_color(iteration);
 		while(time > 0) {
 				update();
 				if (no_update_time.isReady()) {
 						if (update_flag) {
-								lcd_clear();
-								update_flag = false;
-								led_strip_color(stage_colors[iteration][0],stage_colors[iteration][1],stage_colors[iteration][2]);
-								char line[] = "Вставте перемичку # ";
-								line[sizeof(line) - 2] = (char)(iteration + 49);
-								lcd_print(2, line);
-
-								if (iteration > 0) {
-										char ch[3];
-										itoa(config[7 + iteration],ch,10);
-										lcd_print(3, ch);
-								}
+								stage_prepare_front("Вставте перемичку # ", iteration, sizeof("Вставте перемичку # "));
 						}
 						lcd_time_print();
 						if (digitalRead(jumper_pins[iteration])) {             /*stage finished*/
