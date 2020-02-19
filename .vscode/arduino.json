@@ -2,5 +2,6 @@
     "board": "arduino:avr:mega",
     "configuration": "cpu=atmega2560",
     "sketch": "BWF/BWF.ino",
-    "port": "/dev/ttyUSB0"
+    "port": "/dev/ttyUSB0",
+    "output": "./build"
 }
