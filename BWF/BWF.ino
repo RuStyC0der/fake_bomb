@@ -64,9 +64,7 @@ int current_brightness = min_brightness;
 void led_strip_setup();
 void led_strip_color(int, int, int);
 void led_strip_Brightness(int);
-int remote_check();
-void remote_setup();
-void mp3_setup();
+
 void mp3_play(int);
 void led_setup();
 void led_print_time(long);
@@ -110,7 +108,7 @@ bool update_flag = true;
 
 
 void mpu_alarm(){
-	Serial.println("mpu_alarm");
+	// Serial.println("mpu_alarm");
 	lcd_clear();
 	update_flag = true;
 	touch_ignore_time.reset();
@@ -120,7 +118,7 @@ void mpu_alarm(){
 }
 
 void alarm(){
-	Serial.println("alarm");
+	// Serial.println("alarm");
 	lcd_clear();
 	update_flag = true;
 	touch_ignore_time.reset();
@@ -132,7 +130,7 @@ void alarm(){
 void access_granted(){
 	access_time = config[12];
 	mp3_play(5);
-	Serial.println("access_granted");
+	// Serial.println("access_granted");
 	
 }
 
@@ -143,7 +141,7 @@ void update(){
 	bool isDownTreshold = (current_brightness <= min_brightness && step_brightness < 0);
 
 	if (isUpTreshold || isDownTreshold){
-		step_brightness = -step_brightness;
+		step_brightness = -step_brightness; //invert brightess step direction
 		}
 
 	led_strip_Brightness(current_brightness);
@@ -167,12 +165,11 @@ void update(){
 					break;
 			case 2:
 					alarm();
-					Serial.println("remote alarm - time");
+					// Serial.println("remote alarm - time");
 					time -= forfeit_time;
 					break;
 			case 3:
-					Serial.println("remote alarm");
-					alarm();
+					smoke_run();
 					break; 
 			}
 	}
@@ -180,13 +177,16 @@ void update(){
 
 	if (access_time < 0 & gerkon_auth()) {
 		access_granted();
-		Serial.println("access_g");
+		// Serial.println("access_g");
 	}
 
 	if (access_time < 0) {
-			if (touch_ignore_time.isReady() & keypad_check()) {
+
+			// (int)random(1, 7)
+
+			if (keypad_check()) {
 				// TODO: add fake mpu detect :)
-				Serial.println("alarm keypad");
+				// Serial.println("alarm keypad");
 				alarm();
 				time -= forfeit_time;
 			}
@@ -327,8 +327,7 @@ void final_block(){
 		end_cycle_timer.reset();
 		lcd_clear();
 		lcd_print(2,"ВСТАВТЕ КЛЮЧ ДЕ3АКТИВАЦII");
-		// lcd_print(3,"Та натисніть секретні кнопки");
-		max_brightness = 250;
+		max_brightness = current_brightness = 250;
 		while ((end_keys_presed_count() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
         end_keys_light_brightness(current_brightness);
         update();
@@ -346,6 +345,7 @@ void good_final(){
 		lcd_print(2,"********************");
 		lcd_print(3,"ATHTKBYFEEVGYDTYDSY6");
 		mp3_play(2);
+		smoke_run();
 		for (int i = current_brightness; i >= 0; i--) {
 				led_strip_Brightness(i);
 				end_keys_light_brightness(i);
@@ -361,7 +361,6 @@ void bad_final(){
 
 void setup() {
 		pre_init();
-		// Serial.println("SOS");
 		while (!digitalRead(start_button_pin)) {}     // wait to push start button
 		post_init();
 		for (int i = 0; i < 3; i++) {
