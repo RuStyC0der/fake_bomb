@@ -6,7 +6,7 @@
 #include "TM1637_6D.h"
 
 #define CLK 2 //pins definitions for TM1637 and can be changed to other ports
-#define DIO 3
+#define DIO 3 
 
 TM1637_6D tm1637_6D(CLK,DIO);
 int8_t ListDispPoint[6] = {POINT_OFF,POINT_OFF,POINT_ON,POINT_OFF,POINT_ON,POINT_OFF};

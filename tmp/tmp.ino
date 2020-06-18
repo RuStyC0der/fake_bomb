@@ -1,14 +1,14 @@
-int mosfet_pin = 51;
+
+int pin = 37;
 
 void setup()
 {
-  pinMode(mosfet_pin, OUTPUT);
-  digitalWrite(mosfet_pin, HIGH);
-  delayMicroseconds(500);
-  digitalWrite(mosfet_pin, LOW);
+  // pinMode(pin , INPUT_PULLUP);
+  Serial.begin(9600);
 }
 
 void loop()
 {
-  
+  Serial.println(digitalRead(pin));
+  delay(100);
 }

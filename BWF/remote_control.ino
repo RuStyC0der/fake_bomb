@@ -4,9 +4,9 @@
 
 #if REMOTE_DISABLE == 0 
 
-#define chanel_pin_1 48
+#define chanel_pin_1 47
 #define chanel_pin_2 49
-#define chanel_pin_3 53
+#define chanel_pin_3 51
 // #define chanel_pin_4 
 
 void remote_setup(){

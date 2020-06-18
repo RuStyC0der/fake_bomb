@@ -1,29 +1,19 @@
-#include "/home/unknown/Documents/fake_bomb/BWF/remote_control.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/smoke.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/gerkon_auth.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/led_strip.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/led_display.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/lcd_display.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/mpu.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/end_keys.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/mp3_player.ino"
-#include "/home/unknown/Documents/fake_bomb/BWF/keypad.ino"
 
 #include "GyverTimer.h"
 
 int buzzer_pin = 8;
 
-#define MPU 1
-#define REMOTE 1
-#define LED_strip 1
-#define LED_DISPLAY 1
-#define LCD_DISPLAY 1
-#define MP3 1
-#define END_KEYS 1
-#define GERKON 1
+#define MPU 0
+#define REMOTE 0
+#define LED_strip 0
+#define LED_DISPLAY 0
+#define LCD_DISPLAY 0
+#define MP3 0
+#define END_KEYS 0
+#define GERKON 0
 #define KEYPAD 1
 #define SMOKE 0
-#define BUZZER 1
+#define BUZZER 0
 
 
 // test vars :)
@@ -34,12 +24,13 @@ GTimer_ms buzzer_timer(1000);
 GTimer_ms mid_timer(8000);
 
 byte counter = 127;
-char keypad_presed_keys[3] = {'_', '_', '_'};
+char keypad_presed_keys_tt[3] = {'_', '_', '_'};
 
 
 
 
 #if MPU
+#include "/home/unknown/Documents/fake_bomb/BWF/mpu.ino"
 void mpu_test_setup() {
     mpu_setup(4000, 8000);
 }
@@ -53,6 +44,7 @@ void mpu_test(){}
 #endif
 
 #if REMOTE
+#include "/home/unknown/Documents/fake_bomb/BWF/remote_control.ino"
 void remote_test_setup(){
     remote_setup();
 }
@@ -71,6 +63,7 @@ void remote_test(){}
 #endif
 
 #if LED_strip
+#include "/home/unknown/Documents/fake_bomb/BWF/led_strip.ino"
 void LED_strip_setup(){
     led_strip_setup();
 }
@@ -87,6 +80,7 @@ void LED_strip_test(){}
 #endif
 
 #if LED_DISPLAY
+#include "/home/unknown/Documents/fake_bomb/BWF/led_display.ino"
 void LED_DISPLAY_setup(){
     led_setup();
     led_enable();
@@ -102,6 +96,7 @@ void LED_DISPLAY_test(){}
 #endif
 
 #if LCD_DISPLAY
+#include "/home/unknown/Documents/fake_bomb/BWF/lcd_display.ino"
 void LCD_DISPLAY_setup(){
     lcd_setup();
     lcd_enable();
@@ -129,6 +124,7 @@ void LCD_DISPLAY_test(){}
 #endif
 
 #if END_KEYS
+#include "/home/unknown/Documents/fake_bomb/BWF/end_keys.ino"
 void END_KEYS_setup(){
 end_keys_setup();
 }
@@ -145,6 +141,7 @@ void END_KEYS_test(){}
 #endif
 
 #if GERKON
+#include "/home/unknown/Documents/fake_bomb/BWF/gerkon_auth.ino"
 void GERKON_setup(){
     gerkon_setup();
 }
@@ -158,6 +155,7 @@ void GERKON_test(){}
 #endif
 
 #if MP3
+#include "/home/unknown/Documents/fake_bomb/BWF/mp3_player.ino"
 void MP3_setup(){
     mp3_setup();
 }
@@ -174,15 +172,18 @@ void MP3_test(){}
 #endif
 
 #if KEYPAD
+#include "/home/unknown/Documents/fake_bomb/BWF/keypad.ino"
 void KEYPAD_setup(){}
 void KEYPAD_test(){
-    keypad_update_keys(keypad_presed_keys);
+    keypad_update_keys(keypad_presed_keys_tt);
     Serial.print("keypad keys: ");
-    Serial.print(keypad_presed_keys[0]);
-    Serial.print(keypad_presed_keys[1]);
-    Serial.print(keypad_presed_keys[2]);
-    Serial.print(" check state: ");
-    Serial.println(keypad_check());
+    Serial.print(keypad_presed_keys_tt[0]);
+    Serial.print(keypad_presed_keys_tt[1]);
+    Serial.print(keypad_presed_keys_tt[2]);
+    Serial.println();
+    // Serial.print(" check state: ");
+    // Serial.println(keypad_check());
+    // Serial.println();
 }
 #else  
 void KEYPAD_setup(){}
@@ -190,6 +191,7 @@ void KEYPAD_test(){}
 #endif
 
 #if SMOKE
+#include "/home/unknown/Documents/fake_bomb/BWF/smoke.ino"
 void SMOKE_setup(){
     smoke_setup();
 }

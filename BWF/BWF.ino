@@ -85,9 +85,9 @@ bool smoke_run();
 ////////////////////////////////////////////////////////////////////////////////
 // logic
 
-int clock_step_ms = 40;
+int clock_step_ms = 110; // try change this to 20 or 50
 
-GTimer_ms step_time(clock_step_ms); // try change this to 20 or 50
+
 GTimer_ms second(1000);
 GTimer_ms end_cycle_timer(10000);
 
@@ -161,7 +161,7 @@ void update(){
 			case 0:
 					break;
 			case 1:
-					time += time_move_step;
+					alarm();
 					break;
 			case 2:
 					alarm();
@@ -184,7 +184,7 @@ void update(){
 
 			// (int)random(1, 7)
 
-			if (keypad_check()) {
+			if (keypad_check() & touch_ignore_time.isReady()) {
 				// TODO: add fake mpu detect :)
 				// Serial.println("alarm keypad");
 				alarm();

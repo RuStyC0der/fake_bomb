@@ -7,7 +7,7 @@ float min_bat_treshold_or = 2.9;
 float drawdown_factor = 0.88;
 float temp_treshold = 60;
 
-int mosfet_pin = 51;
+int mosfet_pin = 53;
 int bat_pin = A3;
 bool status = false;
 
@@ -59,7 +59,3 @@ bool smoke_run(){
 			return false;
 		}
 }
-
-
-
-
