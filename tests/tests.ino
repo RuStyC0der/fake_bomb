@@ -9,9 +9,9 @@ int buzzer_pin = 8;
 #define LED_DISPLAY 0
 #define LCD_DISPLAY 0
 #define MP3 0
-#define END_KEYS 0
+#define END_KEYS 1
 #define GERKON 0
-#define KEYPAD 1
+#define KEYPAD 0
 #define SMOKE 0
 #define BUZZER 0
 
@@ -167,7 +167,7 @@ void MP3_test(){
     }
 }
 #else  
-void MP3_setup(){}
+void MP3_setup(){} 
 void MP3_test(){}
 #endif
 

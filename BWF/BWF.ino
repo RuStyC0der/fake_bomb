@@ -329,12 +329,12 @@ void final_block(){
 		lcd_print(2,"ВСТАВТЕ КЛЮЧ ДЕ3АКТИВАЦII");
 		max_brightness = current_brightness = 250;
 		while ((end_keys_presed_count() != sizeof(end_keys_pins) -1) || !digitalRead(disactivation_key_pin)) {
-        end_keys_light_brightness(current_brightness);
-        update();
-				if (end_cycle_timer.isReady()) {
-						mp3_play(9);
-				}
-				if (time <= 0) {bad_final();}         // finish b if timeout
+			end_keys_light_brightness(current_brightness);
+			update();
+			if (end_cycle_timer.isReady()) {
+					mp3_play(9);
+			}
+			if (time <= 0) {bad_final();}
 		}
 
 }

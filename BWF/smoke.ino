@@ -9,6 +9,7 @@ float temp_treshold = 60;
 
 int mosfet_pin = 53;
 int bat_pin = A3;
+
 bool status = false;
 
 float readVcc() { //функция чтения внутреннего опорного напряжения, универсальная (для всех ардуин)
