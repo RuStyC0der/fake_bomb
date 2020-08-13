@@ -358,20 +358,23 @@ void final_block()
 	lcd_print(2, "    ДЕ3АКТИВАЦII");
 	max_brightness = current_brightness = 250;
 	mp3_play(9);
-	while ((end_keys_presed_count() < (sizeof(end_keys_pins))) || !digitalRead(disactivation_key_pin))
+	while (true)
 	{
-		delay(20);
-		if ((end_keys_presed_count() < (sizeof(end_keys_pins))) || !digitalRead(disactivation_key_pin))
-		{			
-			end_keys_light_brightness(current_brightness);
-			update();
-			if (end_cycle_timer.isReady())
-			{
-				mp3_play(9);
-			}
-			if (time <= 0)
-			{
-				bad_final();
+		end_keys_light_brightness(current_brightness);
+		update();
+		if (end_cycle_timer.isReady())
+		{
+			mp3_play(9);
+		}
+		if (time <= 0)
+		{
+			bad_final();
+		}
+		if ((end_keys_presed_count() >= (sizeof(end_keys_pins))) && digitalRead(disactivation_key_pin))
+		{
+			delay(20);
+			if ((end_keys_presed_count() >= (sizeof(end_keys_pins))) && digitalRead(disactivation_key_pin)){
+				return;
 			}
 		}
 	}
