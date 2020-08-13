@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "/home/unknown/Soft/arduino-1.8.11/tools/**",
-                "/home/unknown/Soft/arduino-1.8.11/hardware/arduino/avr/**"
+                "/home/unknown/Soft/arduino-1.8.11/hardware/arduino/avr/**",
+                "/home/unknown/Arduino/libraries/GyverTimer/**"
             ],
             "forcedInclude": [
                 "/home/unknown/Soft/arduino-1.8.11/hardware/arduino/avr/cores/arduino/Arduino.h"

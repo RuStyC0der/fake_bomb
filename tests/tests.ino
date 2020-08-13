@@ -4,12 +4,12 @@
 int buzzer_pin = 8;
 
 #define MPU 0
-#define REMOTE 0
+#define REMOTE 1
 #define LED_strip 0
 #define LED_DISPLAY 0
 #define LCD_DISPLAY 0
 #define MP3 0
-#define END_KEYS 1
+#define END_KEYS 0
 #define GERKON 0
 #define KEYPAD 0
 #define SMOKE 0

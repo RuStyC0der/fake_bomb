@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // LED line
 #include <Adafruit_NeoPixel.h>
-#define PIN   26
+#define PIN   9
 #define NUMPIXELS 17
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);

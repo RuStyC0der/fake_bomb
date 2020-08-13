@@ -1,3 +1,7 @@
+
+// byte end_keys_pins[1] = {A12};
+//  A15 yellow right side
+//  
 byte end_keys_pins[4] = {A12,A13,A14,A15};
 byte end_keys_light_pin = 46; // this is not 11
 
