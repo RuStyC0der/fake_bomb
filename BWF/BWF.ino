@@ -58,7 +58,6 @@ int current_brightness = min_brightness;
 // 12: end of second stage, starting thrid stage
 // 13: end of thrid stage, starting final block
 
-
 // PROTOTYPES
 void led_strip_setup();
 void led_strip_color(int, int, int);
@@ -373,7 +372,8 @@ void final_block()
 		if ((end_keys_presed_count() >= (sizeof(end_keys_pins))) && digitalRead(disactivation_key_pin))
 		{
 			delay(20);
-			if ((end_keys_presed_count() >= (sizeof(end_keys_pins))) && digitalRead(disactivation_key_pin)){
+			if ((end_keys_presed_count() >= (sizeof(end_keys_pins))) && digitalRead(disactivation_key_pin))
+			{
 				return;
 			}
 		}
@@ -389,7 +389,7 @@ void good_final()
 	lcd_print(3, "ATHTKBYFEEVGYDTYDSY6");
 	mp3_play(2);
 	smoke_run();
-	for (int i = current_brightness; i >= 0; i--)
+	for (int i = max_brightness; i >= 0; i--)
 	{
 		led_strip_Brightness(i);
 		end_keys_light_brightness(i);
@@ -413,10 +413,27 @@ void bad_final()
 	} // wait for reset
 }
 
+void validate_disactivation_key()
+{
+	if (digitalRead(disactivation_key_pin))
+	{
+		digitalWrite(buzzer_pin, HIGH);
+		delay(4000);
+		digitalWrite(buzzer_pin, LOW);
+		while (true)
+		{
+			delay(1000);
+		}
+	}
+}
+
 void setup()
 {
 	pre_init();
-	while (!digitalRead(start_button_pin)){} // wait to push start button
+	validate_disactivation_key();
+	while (!digitalRead(start_button_pin))
+	{
+	} // wait to push start button
 	post_init();
 	for (int i = 0; i < 3; i++)
 	{
