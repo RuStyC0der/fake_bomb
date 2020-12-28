@@ -393,10 +393,10 @@ void good_final()
 	{
 		led_strip_Brightness(i);
 		end_keys_light_brightness(i);
-		delay(60);
+		delay(17);
 	}
 	mp3_play(10);
-	delay(10000);
+	// delay(2000);
 	digitalWrite(buzzer_pin, LOW);
 	while (true)
 	{
