@@ -7,14 +7,14 @@
 	#include "Wire.h"
 #endif
 
-int mpu_first_treshold;
-int mpu_second_treshold;
+int mpu_treshold = 10000;
 
 MPU6050 accel;
 
-void mpu_setup(int first_treshold,int second_treshold) {
-  mpu_first_treshold = first_treshold;
-  mpu_second_treshold = second_treshold;
+byte output_pin = 4;
+
+void setup() {
+  	
 	#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 		Wire.begin();
 	#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
@@ -41,18 +41,16 @@ float _mpu_filter(float val) {
 }
 
 
-int mpu_check(/* arguments */) {
+void loop(/* arguments */) {
 		int16_t ax_raw, ay_raw, az_raw, gx_raw, gy_raw, gz_raw;
 		unsigned int sum;
 
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
 		sum = abs(_mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
 
-		if (sum > mpu_second_treshold) {
-				return 2;
-		}else if (sum > mpu_first_treshold) {
-				return 1;
+		if (sum > mpu_treshold) {
+				digitalWrite(output_pin, HIGH);
 		}else{
-				return 0;
+				digitalWrite(output_pin, LOW);
 		}
 }
