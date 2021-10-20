@@ -7,13 +7,17 @@
 	#include "Wire.h"
 #endif
 
-int mpu_treshold = 10000;
+int mpu_treshold = 3500;
+int reset_treshold = 1200; // 1200 tick by 500 ms = 10 minutes
+int reset_counter = 0;
 
 MPU6050 accel;
 
 byte output_pin = 4;
 
 void setup() {
+
+	// Serial.begin(115200);
   	
 	#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 		Wire.begin();
@@ -26,7 +30,7 @@ void setup() {
 
 // переменные для Калмана
 float varVolt = 78.9;   // среднее отклонение (ищем в excel)
-float varProcess = 0.05; // скорость реакции на изменение (подбирается вручную)
+float varProcess = 0.65; // скорость реакции на изменение (подбирается вручную)
 float Pc = 0.0, G = 0.0, P = 1.0, Xp = 0.0, Zp = 0.0, Xe = 0.0;
 
 // Функция фильтрации
@@ -40,17 +44,37 @@ float _mpu_filter(float val) {
 		return (Xe);
 }
 
+unsigned long previous_milis = millis();
+
+long interval = 1000;
+
+void(* resetFunc) (void) = 0; //declare reset function @ address 0
+
 
 void loop(/* arguments */) {
 		int16_t ax_raw, ay_raw, az_raw, gx_raw, gy_raw, gz_raw;
 		unsigned int sum;
 
-		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
-		sum = abs(_mpu_filter(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
 
+
+		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
+		sum = _mpu_filter(abs(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
+
+
+		// Serial.println(sum);
+		// Serial.println(abs(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
+		// Serial.println();
+		
 		if (sum > mpu_treshold) {
 				digitalWrite(output_pin, HIGH);
 		}else{
 				digitalWrite(output_pin, LOW);
+		}
+		delay(500);
+
+
+		reset_counter++;
+		if (reset_counter >= reset_treshold){
+			resetFunc();
 		}
 }
