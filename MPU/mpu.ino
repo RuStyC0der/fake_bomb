@@ -30,7 +30,7 @@ void setup() {
 
 // переменные для Калмана
 float varVolt = 78.9;   // среднее отклонение (ищем в excel)
-float varProcess = 0.65; // скорость реакции на изменение (подбирается вручную)
+float varProcess = 1.0; // скорость реакции на изменение (подбирается вручную)
 float Pc = 0.0, G = 0.0, P = 1.0, Xp = 0.0, Zp = 0.0, Xe = 0.0;
 
 // Функция фильтрации
@@ -60,10 +60,8 @@ void loop(/* arguments */) {
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
 		sum = _mpu_filter(abs(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
 
-
 		// Serial.println(sum);
-		// Serial.println(abs(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
-		// Serial.println();
+
 		
 		if (sum > mpu_treshold) {
 				digitalWrite(output_pin, HIGH);
