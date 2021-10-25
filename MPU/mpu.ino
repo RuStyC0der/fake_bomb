@@ -2,12 +2,15 @@
 //mpu6050
 #include "I2Cdev.h"
 #include "MPU6050.h"
+#include "GyverTimer.h"
+
+GTimer_ms touch_ignore_time(15000);
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 	#include "Wire.h"
 #endif
 
-int mpu_treshold = 3500;
+int mpu_treshold = 2000;
 int reset_treshold = 1200; // 1200 tick by 500 ms = 10 minutes
 int reset_counter = 0;
 
@@ -17,7 +20,11 @@ byte output_pin = 4;
 
 void setup() {
 
-	// Serial.begin(115200);
+	touch_ignore_time.setMode(0);
+
+	Serial.begin(115200);
+
+	pinMode(output_pin, OUTPUT);
   	
 	#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 		Wire.begin();
@@ -58,13 +65,14 @@ void loop(/* arguments */) {
 
 
 		accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
-		sum = _mpu_filter(abs(constrain((gx_raw + gy_raw + gz_raw), -48000, 48000)));
+		sum = _mpu_filter(abs(constrain((gx_raw + gy_raw + gz_raw + ax_raw), -48000, 48000)));
 
-		// Serial.println(sum);
+		Serial.println(sum);
 
 		
-		if (sum > mpu_treshold) {
+		if (sum > mpu_treshold && touch_ignore_time.isReady()) {
 				digitalWrite(output_pin, HIGH);
+				touch_ignore_time.reset();
 		}else{
 				digitalWrite(output_pin, LOW);
 		}

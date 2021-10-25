@@ -81,7 +81,7 @@ void smoke_setup();
 bool smoke_run();
 bool full_motion_detected();
 bool particle_motion_detected();
-bool particle_motion_detected_inverted();
+bool motion_A_detected();
 
 ////////////////////////////////////////////////////////////////////////////////
 // logic
@@ -185,9 +185,9 @@ void update()
 	{
 
 		// (int)random(1, 7)
-		if (particle_motion_detected_inverted() & touch_ignore_time.isReady())
+		if (motion_A_detected() & touch_ignore_time.isReady())
 		{
-			Serial.println("particle_motion_detected_inverted");
+			Serial.println("motion_A_detected");
 			motion_alarm();
 		}
 
